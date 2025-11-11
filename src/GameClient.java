@@ -165,9 +165,9 @@ public class GameClient extends JFrame {
         // 상단 상태바
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.setPreferredSize(new Dimension(0, 42));
-        top.setBackground(new Color(30, 30, 35));
-        statusLabel = new JLabel("🎮 맵을 선택하세요...");
-        statusLabel.setForeground(Color.WHITE);
+        top.setBackground(new Color(20, 25, 35));
+        statusLabel = new JLabel("� 숨을 장소를 선택하세요...");
+        statusLabel.setForeground(new Color(220, 230, 255));
         statusLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 18));
         top.add(statusLabel);
         add(top, BorderLayout.NORTH);
@@ -187,29 +187,56 @@ public class GameClient extends JFrame {
         right.setBackground(new Color(25, 25, 28));
 
         // 접속 클라이언트 현황
-        playerListArea = new JTextArea("👥 접속 클라이언트:\n");
+        playerListArea = new JTextArea("👥 숨는 사람들:\n");
         playerListArea.setEditable(false);
-        playerListArea.setBackground(new Color(35, 35, 40));
-        playerListArea.setForeground(Color.WHITE);
-        playerListArea.setFont(new Font("Malgun Gothic", Font.PLAIN, 13));
+        playerListArea.setBackground(new Color(20, 25, 35));
+        playerListArea.setForeground(new Color(220, 230, 255));
+        playerListArea.setFont(new Font("Consolas", Font.BOLD, 13));
+        playerListArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(new Color(80, 100, 140), 2),
+                        "� 은신 중인 플레이어",
+                        0, 0,
+                        new Font("Malgun Gothic", Font.BOLD, 13),
+                        new Color(200, 220, 255)),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)));
         JScrollPane playerScroll = new JScrollPane(playerListArea);
         playerScroll.setPreferredSize(new Dimension(320, 150));
 
         // 맵 선택 현황
-        mapStatusArea = new JTextArea("🗺️ 맵 선택 현황:\n");
+        mapStatusArea = new JTextArea("🗺️ 선택된 은신처:\n");
         mapStatusArea.setEditable(false);
-        mapStatusArea.setBackground(new Color(40, 40, 45));
-        mapStatusArea.setForeground(Color.CYAN);
-        mapStatusArea.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
+        mapStatusArea.setBackground(new Color(15, 20, 30));
+        mapStatusArea.setForeground(new Color(150, 200, 255));
+        mapStatusArea.setFont(new Font("Consolas", Font.BOLD, 12));
+        mapStatusArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(new Color(60, 100, 160), 2),
+                        "🌙 은신처 현황",
+                        0, 0,
+                        new Font("Malgun Gothic", Font.BOLD, 13),
+                        new Color(180, 200, 240)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)));
         JScrollPane mapScroll = new JScrollPane(mapStatusArea);
-        mapScroll.setPreferredSize(new Dimension(320, 120));
+        mapScroll.setPreferredSize(new Dimension(320, 130));
+        mapScroll.getViewport().setBackground(new Color(15, 20, 30));
 
-        chatArea = new JTextArea("=== 채팅 ===\n");
+        chatArea = new JTextArea("� === 은밀한 대화 === �\n");
         chatArea.setEditable(false);
-        chatArea.setBackground(new Color(22, 22, 26));
-        chatArea.setForeground(Color.LIGHT_GRAY);
+        chatArea.setBackground(new Color(12, 18, 28));
+        chatArea.setForeground(new Color(180, 220, 180));
+        chatArea.setFont(new Font("Consolas", Font.PLAIN, 13));
         chatArea.setLineWrap(true);
+        chatArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(new Color(40, 120, 60), 2),
+                        "🤫 비밀 채팅",
+                        0, 0,
+                        new Font("Malgun Gothic", Font.BOLD, 13),
+                        new Color(150, 220, 150)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)));
         JScrollPane chatScroll = new JScrollPane(chatArea);
+        chatScroll.getViewport().setBackground(new Color(12, 18, 28));
 
         // 우측 패널 구성
         JPanel rightTop = new JPanel(new BorderLayout());
@@ -220,7 +247,16 @@ public class GameClient extends JFrame {
         right.add(chatScroll, BorderLayout.CENTER);
 
         // 시작 버튼은 모든 플레이어가 선택 완료 후 표시
-        startBtn = new JButton("🎯 게임 시작");
+        startBtn = new JButton("🔦 숨바꼭질 시작 🔦");
+        startBtn.setFont(new Font("Malgun Gothic", Font.BOLD, 16));
+        startBtn.setBackground(new Color(180, 40, 40));
+        startBtn.setForeground(Color.WHITE);
+        startBtn.setFocusPainted(false);
+        startBtn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 180, 80), 3),
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(60, 20, 20), 1),
+                        BorderFactory.createEmptyBorder(8, 12, 8, 12))));
         startBtn.addActionListener(e -> out.println("START_GAME"));
         startBtn.setVisible(false); // 처음에는 숨김
         right.add(startBtn, BorderLayout.SOUTH);
@@ -255,24 +291,43 @@ public class GameClient extends JFrame {
      */
     private JPanel createMapSelectionPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(new Color(25, 30, 35));
+        // 숨바꼭질 분위기: 어두운 밤하늘 느낌
+        panel.setBackground(new Color(10, 15, 25));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(40, 60, 90), 3),
+                BorderFactory.createEmptyBorder(30, 30, 30, 30)));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(20, 20, 20, 20);
 
-        // 제목
-        JLabel titleLabel = new JLabel("맵을 선택하세요");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 32));
+        // 게임 타이틀과 장식 - 숨바꼭질 테마
+        JPanel titlePanel = new JPanel();
+        titlePanel.setOpaque(false);
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+
+        JLabel gameTitle = new JLabel("🔦 PROP HUNT 2D 🔦");
+        gameTitle.setForeground(new Color(255, 230, 100)); // 손전등 빛 색상
+        gameTitle.setFont(new Font("Malgun Gothic", Font.BOLD, 40));
+        gameTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel titleLabel = new JLabel("🌙 숨을 장소를 선택하세요 🌙");
+        titleLabel.setForeground(new Color(180, 200, 255));
+        titleLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 26));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        titlePanel.add(gameTitle);
+        titlePanel.add(Box.createVerticalStrut(12));
+        titlePanel.add(titleLabel);
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3;
-        panel.add(titleLabel, gbc);
+        panel.add(titlePanel, gbc);
 
-        // 안내 텍스트
-        JLabel infoLabel = new JLabel("모든 플레이어가 선택을 완료하면 게임이 시작됩니다");
-        infoLabel.setForeground(Color.LIGHT_GRAY);
-        infoLabel.setFont(new Font("Malgun Gothic", Font.PLAIN, 16));
+        // 안내 텍스트를 숨바꼭질 분위기로
+        JLabel infoLabel = new JLabel("👻 모두 준비되면 숨바꼭질이 시작됩니다... 👻");
+        infoLabel.setForeground(new Color(160, 160, 180));
+        infoLabel.setFont(new Font("Malgun Gothic", Font.ITALIC, 15));
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 3;
@@ -285,20 +340,20 @@ public class GameClient extends JFrame {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
 
-        // City 버튼
-        cityBtn = createMapButton("🏙️ City", "도시", new Color(70, 130, 180));
+        // City 버튼 - 미래도시 테마
+        cityBtn = createMapButton("🏙️ CITY", "도심의 그림자", new Color(20, 100, 180));
         cityBtn.addActionListener(e -> selectMap("CITY"));
         gbc.gridx = 0;
         panel.add(cityBtn, gbc);
 
-        // Construction 버튼
-        constructionBtn = createMapButton("🏗️ Construction", "공사장", new Color(205, 133, 63));
+        // Construction 버튼 - 건설현장 테마
+        constructionBtn = createMapButton("🏗️ SITE", "공사장의 어둠", new Color(180, 100, 20));
         constructionBtn.addActionListener(e -> selectMap("CONSTRUCTION"));
         gbc.gridx = 1;
         panel.add(constructionBtn, gbc);
 
-        // School 버튼
-        schoolBtn = createMapButton("🏫 School", "학교", new Color(60, 179, 113));
+        // School 버튼 - 학교 테마
+        schoolBtn = createMapButton("🏫 SCHOOL", "학교의 적막", new Color(20, 120, 60));
         schoolBtn.addActionListener(e -> selectMap("SCHOOL"));
         gbc.gridx = 2;
         panel.add(schoolBtn, gbc);
@@ -312,45 +367,93 @@ public class GameClient extends JFrame {
     private JButton createMapButton(String title, String subtitle, Color color) {
         JButton button = new JButton();
         button.setLayout(new BorderLayout());
-        button.setPreferredSize(new Dimension(250, 200));
-        button.setBackground(color);
+        button.setPreferredSize(new Dimension(280, 260));
+
+        // 어두운 숨바꼭질 분위기
+        button.setBackground(color.darker());
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createRaisedBevelBorder());
+
+        // 미스터리한 테두리 스타일
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(80, 80, 120), 2),
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(color.brighter().brighter(), 1),
+                        BorderFactory.createEmptyBorder(20, 15, 20, 15))));
 
         // 버튼 내용
         JPanel content = new JPanel();
         content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
+        // 장식용 아이콘/구분선 - 숨바꼭질 테마
+        JLabel decorLine1 = new JLabel("· · · · · · · · ·");
+        decorLine1.setForeground(new Color(200, 200, 220, 150));
+        decorLine1.setFont(new Font("Monospaced", Font.BOLD, 16));
+        decorLine1.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel titleLbl = new JLabel(title);
-        titleLbl.setForeground(Color.WHITE);
-        titleLbl.setFont(new Font("Malgun Gothic", Font.BOLD, 24));
+        titleLbl.setForeground(new Color(255, 255, 255));
+        titleLbl.setFont(new Font("Malgun Gothic", Font.BOLD, 20));
         titleLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel subtitleLbl = new JLabel(subtitle);
-        subtitleLbl.setForeground(Color.LIGHT_GRAY);
-        subtitleLbl.setFont(new Font("Malgun Gothic", Font.PLAIN, 16));
+        subtitleLbl.setForeground(new Color(180, 200, 220));
+        subtitleLbl.setFont(new Font("Malgun Gothic", Font.ITALIC, 14));
         subtitleLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        JLabel decorLine2 = new JLabel("· · · · · · · · ·");
+        decorLine2.setForeground(new Color(200, 200, 220, 150));
+        decorLine2.setFont(new Font("Monospaced", Font.BOLD, 16));
+        decorLine2.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // 숨바꼭질 관련 상태 텍스트
+        JLabel statusLbl = new JLabel("[ 숨을 준비 완료 ]");
+        statusLbl.setForeground(new Color(150, 230, 150, 200));
+        statusLbl.setFont(new Font("Malgun Gothic", Font.PLAIN, 13));
+        statusLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // 분위기 아이콘
+        JLabel iconLbl = new JLabel("👁️");
+        iconLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+        iconLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         content.add(Box.createVerticalGlue());
+        content.add(iconLbl);
+        content.add(Box.createVerticalStrut(8));
+        content.add(decorLine1);
+        content.add(Box.createVerticalStrut(12));
         content.add(titleLbl);
-        content.add(Box.createVerticalStrut(10));
+        content.add(Box.createVerticalStrut(6));
         content.add(subtitleLbl);
+        content.add(Box.createVerticalStrut(12));
+        content.add(statusLbl);
+        content.add(Box.createVerticalStrut(6));
+        content.add(decorLine2);
         content.add(Box.createVerticalGlue());
 
         button.add(content, BorderLayout.CENTER);
 
-        // 호버 효과
+        // 미스터리한 호버 효과
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                button.setBackground(color.brighter());
+                button.setBackground(color);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(255, 255, 150), 3),
+                        BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(color.brighter().brighter(), 1),
+                                BorderFactory.createEmptyBorder(20, 15, 20, 15))));
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                button.setBackground(color);
+                button.setBackground(color.darker());
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(80, 80, 120), 2),
+                        BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(color.brighter().brighter(), 1),
+                                BorderFactory.createEmptyBorder(20, 15, 20, 15))));
             }
         });
 
@@ -492,50 +595,87 @@ public class GameClient extends JFrame {
         final JDialog dialog = new JDialog(this, "알림", true);
         dialog.setUndecorated(true);
         JPanel root = new JPanel(new BorderLayout());
-        root.setBorder(BorderFactory.createLineBorder(new Color(40, 40, 48), 2));
-        root.setBackground(new Color(18, 20, 24));
+        root.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(seeker ? new Color(180, 60, 60) : new Color(60, 120, 180), 3),
+                BorderFactory.createLineBorder(new Color(15, 20, 30), 2)));
+        root.setBackground(new Color(12, 18, 26));
 
         JPanel banner = new JPanel() {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                Color c1 = seeker ? new Color(85, 25, 25) : new Color(20, 40, 70);
-                Color c2 = seeker ? new Color(140, 40, 40) : new Color(50, 100, 160);
-                GradientPaint gp = new GradientPaint(0, 0, c2, getWidth(), getHeight(), c1);
-                g2.setPaint(gp);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // 고급스러운 그라데이션
+                if (seeker) {
+                    GradientPaint gp = new GradientPaint(
+                            0, 0, new Color(100, 30, 30),
+                            getWidth(), getHeight(), new Color(60, 15, 15));
+                    g2.setPaint(gp);
+                } else {
+                    GradientPaint gp = new GradientPaint(
+                            0, 0, new Color(25, 50, 85),
+                            getWidth(), getHeight(), new Color(15, 30, 55));
+                    g2.setPaint(gp);
+                }
                 g2.fillRect(0, 0, getWidth(), getHeight());
+
+                // 장식 효과
+                g2.setColor(seeker ? new Color(255, 100, 100, 40) : new Color(100, 150, 255, 40));
+                g2.fillOval(-50, -50, 200, 200);
+                g2.fillOval(getWidth() - 150, getHeight() - 150, 200, 200);
+
                 g2.dispose();
             }
         };
-        banner.setPreferredSize(new Dimension(560, 170));
+        banner.setPreferredSize(new Dimension(580, 190));
         banner.setOpaque(false);
         banner.setLayout(new GridBagLayout());
 
-        String titleText = seeker ? "당신은 술래입니다!" : "당신은 숨는 사람입니다!";
-        String lines = seeker ? "20초 후 움직일 수 있습니다.\nWASD 이동, 스페이스 사격" : "WASD로 이동";
+        String icon = seeker ? "🔦" : "👻";
+        String titleText = seeker ? icon + " 당신은 술래입니다! " + icon : icon + " 당신은 숨는 사람입니다! " + icon;
+        String lines = seeker ? "⏰ 20초 후 움직일 수 있습니다\n⌨️ WASD: 이동 | SPACE: 사격" : "⌨️ WASD로 이동하여 숨으세요!";
+
         JLabel title = new JLabel(titleText);
-        title.setForeground(new Color(240, 240, 245));
-        title.setFont(new Font("Malgun Gothic", Font.BOLD, 24));
+        title.setForeground(new Color(250, 255, 260));
+        title.setFont(new Font("Malgun Gothic", Font.BOLD, 26));
+
         JTextArea desc = new JTextArea(lines);
         desc.setEditable(false);
         desc.setOpaque(false);
-        desc.setForeground(new Color(210, 210, 220));
-        desc.setFont(new Font("Malgun Gothic", Font.PLAIN, 14));
+        desc.setForeground(new Color(220, 230, 245));
+        desc.setFont(new Font("Malgun Gothic", Font.PLAIN, 15));
 
         JPanel titleBox = new JPanel();
         titleBox.setOpaque(false);
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
         titleBox.add(title);
-        titleBox.add(Box.createVerticalStrut(6));
+        titleBox.add(Box.createVerticalStrut(10));
         titleBox.add(desc);
         banner.add(titleBox);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        bottom.setBackground(new Color(18, 20, 24));
-        JButton ok = new JButton("확인");
-        ok.setBackground(new Color(70, 75, 85));
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 14));
+        bottom.setBackground(new Color(12, 18, 26));
+
+        JButton ok = new JButton("✓ 준비 완료");
+        ok.setBackground(seeker ? new Color(140, 50, 50) : new Color(50, 100, 150));
         ok.setForeground(Color.WHITE);
+        ok.setFont(new Font("Malgun Gothic", Font.BOLD, 14));
         ok.setFocusPainted(false);
+        ok.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(seeker ? new Color(180, 80, 80) : new Color(80, 140, 200), 2),
+                BorderFactory.createEmptyBorder(10, 30, 10, 30)));
+
+        ok.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                ok.setBackground(seeker ? new Color(160, 60, 60) : new Color(60, 120, 170));
+            }
+
+            public void mouseExited(MouseEvent e) {
+                ok.setBackground(seeker ? new Color(140, 50, 50) : new Color(50, 100, 150));
+            }
+        });
+
         bottom.add(ok);
 
         root.add(banner, BorderLayout.NORTH);
@@ -552,45 +692,73 @@ public class GameClient extends JFrame {
         final JDialog dialog = new JDialog(this, "발각됨", true);
         dialog.setUndecorated(true);
         JPanel root = new JPanel(new BorderLayout());
-        root.setBorder(BorderFactory.createLineBorder(new Color(60, 30, 30), 2));
-        root.setBackground(new Color(18, 20, 24));
+        root.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 80, 80), 3),
+                BorderFactory.createLineBorder(new Color(15, 18, 24), 2)));
+        root.setBackground(new Color(12, 15, 20));
 
         JPanel banner = new JPanel() {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                GradientPaint gp = new GradientPaint(0, 0, new Color(75, 20, 20), getWidth(), getHeight(),
-                        new Color(18, 20, 24));
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                GradientPaint gp = new GradientPaint(
+                        0, 0, new Color(90, 25, 25),
+                        getWidth(), getHeight(), new Color(50, 15, 15));
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
+
+                // 붉은 경고 효과
+                g2.setColor(new Color(255, 80, 80, 60));
+                g2.fillOval(-30, -30, 150, 150);
+                g2.fillOval(getWidth() - 120, getHeight() - 120, 150, 150);
+
                 g2.dispose();
             }
         };
-        banner.setPreferredSize(new Dimension(520, 160));
+        banner.setPreferredSize(new Dimension(540, 180));
         banner.setOpaque(false);
         banner.setLayout(new GridBagLayout());
 
-        JLabel title = new JLabel("💀 발각되었습니다!");
-        title.setForeground(new Color(255, 220, 220));
-        title.setFont(new Font("Malgun Gothic", Font.BOLD, 26));
-        JLabel subtitle = new JLabel("관전 모드로 전환됩니다");
-        subtitle.setForeground(new Color(230, 200, 200));
-        subtitle.setFont(new Font("Malgun Gothic", Font.PLAIN, 14));
+        JLabel title = new JLabel("💀 발각되었습니다! 💀");
+        title.setForeground(new Color(255, 230, 230));
+        title.setFont(new Font("Malgun Gothic", Font.BOLD, 28));
+
+        JLabel subtitle = new JLabel("👁️ 관전 모드로 전환됩니다");
+        subtitle.setForeground(new Color(240, 210, 210));
+        subtitle.setFont(new Font("Malgun Gothic", Font.PLAIN, 15));
 
         JPanel titleBox = new JPanel();
         titleBox.setOpaque(false);
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
         titleBox.add(title);
-        titleBox.add(Box.createVerticalStrut(6));
+        titleBox.add(Box.createVerticalStrut(10));
         titleBox.add(subtitle);
         banner.add(titleBox);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        bottom.setBackground(new Color(18, 20, 24));
-        JButton ok = new JButton("확인");
-        ok.setBackground(new Color(175, 76, 76));
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 14));
+        bottom.setBackground(new Color(12, 15, 20));
+
+        JButton ok = new JButton("✓ 확인");
+        ok.setBackground(new Color(160, 60, 60));
         ok.setForeground(Color.WHITE);
+        ok.setFont(new Font("Malgun Gothic", Font.BOLD, 14));
         ok.setFocusPainted(false);
+        ok.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 100, 100), 2),
+                BorderFactory.createEmptyBorder(10, 30, 10, 30)));
+
+        ok.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                ok.setBackground(new Color(180, 70, 70));
+            }
+
+            public void mouseExited(MouseEvent e) {
+                ok.setBackground(new Color(160, 60, 60));
+            }
+        });
+
         bottom.add(ok);
 
         root.add(banner, BorderLayout.NORTH);
@@ -699,124 +867,191 @@ public class GameClient extends JFrame {
         final JDialog dialog = new JDialog(this, "게임 시작", true);
         dialog.setUndecorated(true);
         JPanel root = new JPanel(new BorderLayout());
-        root.setBorder(BorderFactory.createLineBorder(new Color(40, 40, 48), 2));
-        root.setBackground(new Color(20, 22, 26));
+        root.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(100, 120, 150), 3),
+                BorderFactory.createLineBorder(new Color(20, 25, 35), 2)));
+        root.setBackground(new Color(15, 20, 30));
 
-        // 상단 배너
+        // 상단 배너 - 고급스러운 그라데이션
         JPanel banner = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                // 그라디언트 배경
-                GradientPaint gp = new GradientPaint(0, 0, new Color(30, 34, 45), getWidth(), getHeight(),
-                        new Color(18, 20, 24));
-                g2.setPaint(gp);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-                // 아이콘(있으면)
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // 고급스러운 다중 그라데이션
+                GradientPaint gp1 = new GradientPaint(
+                        0, 0, new Color(25, 35, 50),
+                        0, getHeight() / 2, new Color(15, 25, 40));
+                g2.setPaint(gp1);
+                g2.fillRect(0, 0, getWidth(), getHeight() / 2);
+
+                GradientPaint gp2 = new GradientPaint(
+                        0, getHeight() / 2, new Color(15, 25, 40),
+                        0, getHeight(), new Color(10, 18, 30));
+                g2.setPaint(gp2);
+                g2.fillRect(0, getHeight() / 2, getWidth(), getHeight() / 2);
+
+                // 장식 라인
+                g2.setColor(new Color(100, 150, 200, 80));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawLine(40, getHeight() - 15, getWidth() - 40, getHeight() - 15);
+
+                // 배경 아이콘 (투명하게)
                 Image seeker = imageCache.get("SEEKER");
                 if (seeker != null) {
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.18f));
-                    g2.drawImage(seeker, getWidth() - 140, 10, 120, 160, null);
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.12f));
+                    g2.drawImage(seeker, getWidth() - 150, 10, 130, 170, null);
                     g2.setComposite(AlphaComposite.SrcOver);
                 }
                 g2.dispose();
             }
         };
-        banner.setPreferredSize(new Dimension(520, 180));
+        banner.setPreferredSize(new Dimension(560, 200));
         banner.setOpaque(false);
         banner.setLayout(new GridBagLayout());
 
-        JLabel title = new JLabel("Prop Hunt 2D");
-        title.setForeground(new Color(230, 230, 240));
-        title.setFont(new Font("Malgun Gothic", Font.BOLD, 28));
-        JLabel subtitle = new JLabel("닉네임을 입력하고 게임을 시작하세요");
-        subtitle.setForeground(new Color(180, 185, 195));
-        subtitle.setFont(new Font("Malgun Gothic", Font.PLAIN, 14));
+        // 타이틀 - 더 세련된 스타일
+        JLabel title = new JLabel("🔦 PROP HUNT 2D");
+        title.setForeground(new Color(240, 250, 255));
+        title.setFont(new Font("Malgun Gothic", Font.BOLD, 32));
+
+        JLabel subtitle = new JLabel("당신의 정체를 숨기세요...");
+        subtitle.setForeground(new Color(160, 180, 210));
+        subtitle.setFont(new Font("Malgun Gothic", Font.ITALIC, 15));
 
         JPanel titleBox = new JPanel();
         titleBox.setOpaque(false);
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
         titleBox.add(title);
-        titleBox.add(Box.createVerticalStrut(6));
+        titleBox.add(Box.createVerticalStrut(8));
         titleBox.add(subtitle);
         banner.add(titleBox);
 
-        // 중앙 입력부
+        // 중앙 입력부 - 고급스러운 디자인
         JPanel center = new JPanel();
-        center.setBackground(new Color(20, 22, 26));
-        center.setBorder(BorderFactory.createEmptyBorder(16, 20, 8, 20));
-        center.setLayout(new BorderLayout(10, 10));
+        center.setBackground(new Color(15, 20, 30));
+        center.setBorder(BorderFactory.createEmptyBorder(20, 30, 12, 30));
+        center.setLayout(new BorderLayout(10, 14));
 
+        // 닉네임 입력 필드 - 더 세련된 스타일
         JTextField nameField = new JTextField();
-        nameField.setFont(new Font("Malgun Gothic", Font.BOLD, 16));
-        nameField.setForeground(new Color(230, 230, 235));
-        nameField.setBackground(new Color(32, 35, 42));
-        nameField.setCaretColor(Color.WHITE);
+        nameField.setFont(new Font("Malgun Gothic", Font.BOLD, 17));
+        nameField.setForeground(new Color(240, 245, 255));
+        nameField.setBackground(new Color(25, 32, 45));
+        nameField.setCaretColor(new Color(150, 200, 255));
         nameField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(60, 65, 75)),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(80, 110, 150), 2),
+                        BorderFactory.createLineBorder(new Color(40, 50, 65), 1)),
+                BorderFactory.createEmptyBorder(12, 16, 12, 16)));
         nameField.setColumns(18);
 
-        String[] samples = { "ShadowFox", "SilentChair", "HiddenBarrel", "SneakyCone", "GhostBox" };
-        JLabel hint = new JLabel("예: " + samples[new Random().nextInt(samples.length)]);
-        hint.setForeground(new Color(120, 130, 145));
-        hint.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
+        String[] samples = { "🦊 ShadowFox", "💺 SilentChair", "🛢️ HiddenBarrel", "🚧 SneakyCone", "📦 GhostBox" };
+        JLabel hint = new JLabel("💡 예시: " + samples[new Random().nextInt(samples.length)]);
+        hint.setForeground(new Color(130, 150, 180));
+        hint.setFont(new Font("Malgun Gothic", Font.ITALIC, 13));
 
-        center.add(hint, BorderLayout.NORTH);
-        // 서버 주소 입력 (host[:port])
+        // 서버 주소 입력 (host[:port]) - 고급스러운 스타일
         JTextField serverField = new JTextField(serverHost + ":" + serverPort);
-        serverField.setFont(new Font("Malgun Gothic", Font.PLAIN, 14));
-        serverField.setForeground(new Color(220, 220, 225));
-        serverField.setBackground(new Color(32, 35, 42));
-        serverField.setCaretColor(Color.WHITE);
+        serverField.setFont(new Font("Consolas", Font.PLAIN, 14));
+        serverField.setForeground(new Color(220, 230, 240));
+        serverField.setBackground(new Color(25, 32, 45));
+        serverField.setCaretColor(new Color(150, 200, 255));
         serverField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(60, 65, 75)),
-                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(70, 90, 120), 2),
+                        BorderFactory.createLineBorder(new Color(35, 45, 60), 1)),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)));
 
         JPanel fields = new JPanel();
         fields.setOpaque(false);
-        fields.setLayout(new GridLayout(2, 1, 0, 10));
-        JPanel nameRow = new JPanel(new BorderLayout(8, 0));
+        fields.setLayout(new GridLayout(2, 1, 0, 12));
+
+        JPanel nameRow = new JPanel(new BorderLayout(10, 0));
         nameRow.setOpaque(false);
-        nameRow.add(new JLabel("닉네임"), BorderLayout.WEST);
+        JLabel nameLabel = new JLabel("🎭 닉네임");
+        nameLabel.setForeground(new Color(180, 200, 230));
+        nameLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 14));
+        nameRow.add(nameLabel, BorderLayout.WEST);
         nameRow.add(nameField, BorderLayout.CENTER);
-        JPanel hostRow = new JPanel(new BorderLayout(8, 0));
+
+        JPanel hostRow = new JPanel(new BorderLayout(10, 0));
         hostRow.setOpaque(false);
-        hostRow.add(new JLabel("서버 주소"), BorderLayout.WEST);
+        JLabel serverLabel = new JLabel("🌐 서버");
+        serverLabel.setForeground(new Color(180, 200, 230));
+        serverLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 14));
+        hostRow.add(serverLabel, BorderLayout.WEST);
         hostRow.add(serverField, BorderLayout.CENTER);
 
         fields.add(nameRow);
         fields.add(hostRow);
 
-        JPanel centerTop = new JPanel(new BorderLayout());
+        JPanel centerTop = new JPanel(new BorderLayout(0, 8));
         centerTop.setOpaque(false);
         centerTop.add(hint, BorderLayout.NORTH);
         centerTop.add(fields, BorderLayout.CENTER);
 
         center.add(centerTop, BorderLayout.CENTER);
-        center.add(nameField, BorderLayout.CENTER);
 
-        // 하단 버튼/가이드
+        // 하단 버튼/가이드 - 고급스러운 디자인
         JPanel bottom = new JPanel(new BorderLayout());
-        bottom.setBackground(new Color(20, 22, 26));
-        bottom.setBorder(BorderFactory.createEmptyBorder(8, 20, 16, 20));
+        bottom.setBackground(new Color(15, 20, 30));
+        bottom.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(2, 0, 0, 0, new Color(50, 70, 100)),
+                BorderFactory.createEmptyBorder(16, 30, 20, 30)));
 
-        JLabel controls = new JLabel("WASD: 이동");
-        controls.setForeground(new Color(120, 130, 145));
+        JLabel controls = new JLabel("⌨️ WASD: 이동 | SPACE: 사격 (술래 전용)");
+        controls.setForeground(new Color(130, 150, 180));
         controls.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
 
-        JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         btns.setOpaque(false);
-        JButton cancel = new JButton("종료");
-        JButton ok = new JButton("게임 시작");
-        cancel.setBackground(new Color(50, 55, 65));
-        cancel.setForeground(new Color(220, 220, 230));
+
+        JButton cancel = new JButton("✖ 종료");
+        JButton ok = new JButton("▶ 게임 시작");
+
+        cancel.setBackground(new Color(60, 70, 85));
+        cancel.setForeground(new Color(220, 230, 240));
+        cancel.setFont(new Font("Malgun Gothic", Font.BOLD, 13));
         cancel.setFocusPainted(false);
-        ok.setBackground(new Color(76, 175, 80));
+        cancel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(80, 90, 110), 1),
+                BorderFactory.createEmptyBorder(10, 20, 10, 20)));
+
+        ok.setBackground(new Color(40, 140, 80));
         ok.setForeground(Color.WHITE);
+        ok.setFont(new Font("Malgun Gothic", Font.BOLD, 13));
         ok.setFocusPainted(false);
+        ok.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(60, 180, 100), 1),
+                BorderFactory.createEmptyBorder(10, 24, 10, 24)));
         ok.setEnabled(false);
+
+        // 호버 효과
+        ok.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                if (ok.isEnabled()) {
+                    ok.setBackground(new Color(50, 160, 90));
+                }
+            }
+
+            public void mouseExited(MouseEvent e) {
+                ok.setBackground(new Color(40, 140, 80));
+            }
+        });
+
+        cancel.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                cancel.setBackground(new Color(70, 80, 95));
+            }
+
+            public void mouseExited(MouseEvent e) {
+                cancel.setBackground(new Color(60, 70, 85));
+            }
+        });
+
         btns.add(cancel);
         btns.add(ok);
 
