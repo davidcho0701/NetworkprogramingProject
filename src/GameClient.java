@@ -55,6 +55,7 @@ public class GameClient extends JFrame {
     private JTextField chatInput;
     private JButton startBtn;
     private JLabel statusLabel;
+    private JPanel gameEndOverlay; // 게임 종료 오버레이 패널
 
     // 맵 선택 관련 GUI
     private JButton cityBtn, constructionBtn, schoolBtn;
@@ -230,7 +231,7 @@ public class GameClient extends JFrame {
         chatArea.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(new Color(40, 120, 60), 2),
-                        "🤫 비밀 채팅",
+                        "채팅창",
                         0, 0,
                         new Font("Malgun Gothic", Font.BOLD, 13),
                         new Color(150, 220, 150)),
@@ -637,7 +638,7 @@ public class GameClient extends JFrame {
         String lines = seeker ? "⏰ 20초 후 움직일 수 있습니다\n⌨️ WASD: 이동 | SPACE: 사격" : "⌨️ WASD로 이동하여 숨으세요!";
 
         JLabel title = new JLabel(titleText);
-        title.setForeground(new Color(250, 255, 260));
+        title.setForeground(new Color(250, 255, 255));
         title.setFont(new Font("Malgun Gothic", Font.BOLD, 26));
 
         JTextArea desc = new JTextArea(lines);
@@ -772,61 +773,210 @@ public class GameClient extends JFrame {
     }
 
     private void showGameEndDialog(boolean seekerWin, String seekerName) {
-        final JDialog dialog = new JDialog(this, "게임 종료", true);
-        dialog.setUndecorated(true);
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBorder(BorderFactory.createLineBorder(new Color(40, 40, 48), 2));
-        root.setBackground(new Color(18, 20, 24));
+        // 기존 오버레이가 있으면 제거
+        if (gameEndOverlay != null) {
+            gamePanel.remove(gameEndOverlay);
+            gameEndOverlay = null;
+        }
 
-        JPanel banner = new JPanel() {
+        // 게임 패널을 JLayeredPane처럼 사용하기 위해 null layout 설정
+        gamePanel.setLayout(null);
+
+        // 오버레이 패널 생성 (반투명 배경)
+        gameEndOverlay = new JPanel() {
+            @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                Color c1 = seekerWin ? new Color(60, 20, 20) : new Color(20, 40, 60);
-                Color c2 = seekerWin ? new Color(120, 40, 40) : new Color(40, 80, 120);
-                GradientPaint gp = new GradientPaint(0, 0, c2, getWidth(), getHeight(), c1);
-                g2.setPaint(gp);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // 반투명 어두운 배경
+                g2.setColor(new Color(0, 0, 0, 180));
                 g2.fillRect(0, 0, getWidth(), getHeight());
+
                 g2.dispose();
             }
         };
-        banner.setPreferredSize(new Dimension(560, 180));
+        gameEndOverlay.setOpaque(false);
+        gameEndOverlay.setBounds(0, 0, gamePanel.getWidth(), gamePanel.getHeight());
+        gameEndOverlay.setLayout(new GridBagLayout());
+
+        // 승리 패널 생성
+        JPanel victoryPanel = new JPanel(new BorderLayout());
+        victoryPanel.setPreferredSize(new Dimension(600, 350));
+        victoryPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(seekerWin ? new Color(180, 80, 80) : new Color(80, 140, 200), 4),
+                BorderFactory.createLineBorder(new Color(15, 18, 24), 3)));
+        victoryPanel.setBackground(new Color(12, 15, 20));
+
+        // 배너 패널
+        JPanel banner = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                if (seekerWin) {
+                    GradientPaint gp = new GradientPaint(
+                            0, 0, new Color(90, 30, 30),
+                            getWidth(), getHeight(), new Color(60, 20, 20));
+                    g2.setPaint(gp);
+                } else {
+                    GradientPaint gp = new GradientPaint(
+                            0, 0, new Color(30, 60, 100),
+                            getWidth(), getHeight(), new Color(20, 40, 70));
+                    g2.setPaint(gp);
+                }
+                g2.fillRect(0, 0, getWidth(), getHeight());
+
+                // 승리 효과
+                g2.setColor(seekerWin ? new Color(255, 100, 100, 50) : new Color(100, 180, 255, 50));
+                for (int i = 0; i < 3; i++) {
+                    g2.fillOval(50 + i * 150, 20 + i * 30, 120, 120);
+                }
+
+                g2.dispose();
+            }
+        };
+        banner.setPreferredSize(new Dimension(600, 220));
         banner.setOpaque(false);
         banner.setLayout(new GridBagLayout());
 
-        String titleText = seekerWin ? "🏆 술래 승리!" : "🏆 숨는 팀 승리!";
-        String subText = seekerWin ? (seekerName != null ? ("술래 " + seekerName + "님의 승리") : "술래의 승리") : "도망자들의 승리";
+        String titleText = seekerWin ? "🏆 술래 승! 🏆" : "🏆 도망자 승! 🏆";
+        String subText = seekerWin ? (seekerName != null ? ("🔦 술래 " + seekerName + "님의 완벽한 수색!") : "🔦 술래의 승리!")
+                : "👻 도망자들의 완벽한 은신!";
+
         JLabel title = new JLabel(titleText);
-        title.setForeground(new Color(240, 240, 245));
-        title.setFont(new Font("Malgun Gothic", Font.BOLD, 28));
+        title.setForeground(new Color(250, 255, 255));
+        title.setFont(new Font("Malgun Gothic", Font.BOLD, 40));
+
         JLabel subtitle = new JLabel(subText);
-        subtitle.setForeground(new Color(210, 210, 220));
-        subtitle.setFont(new Font("Malgun Gothic", Font.PLAIN, 14));
+        subtitle.setForeground(new Color(220, 230, 245));
+        subtitle.setFont(new Font("Malgun Gothic", Font.PLAIN, 18));
 
         JPanel titleBox = new JPanel();
         titleBox.setOpaque(false);
         titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleBox.add(title);
-        titleBox.add(Box.createVerticalStrut(6));
+        titleBox.add(Box.createVerticalStrut(15));
         titleBox.add(subtitle);
         banner.add(titleBox);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        bottom.setBackground(new Color(18, 20, 24));
-        JButton ok = new JButton("닫기");
-        ok.setBackground(new Color(70, 75, 85));
-        ok.setForeground(Color.WHITE);
-        ok.setFocusPainted(false);
-        bottom.add(ok);
+        // 하단 버튼 패널
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 20));
+        bottom.setBackground(new Color(12, 15, 20));
 
-        root.add(banner, BorderLayout.NORTH);
-        root.add(bottom, BorderLayout.SOUTH);
-        dialog.setContentPane(root);
+        JButton restartBtn = new JButton("🔄 다시하기");
+        restartBtn.setBackground(seekerWin ? new Color(140, 60, 60) : new Color(60, 120, 160));
+        restartBtn.setForeground(Color.WHITE);
+        restartBtn.setFont(new Font("Malgun Gothic", Font.BOLD, 16));
+        restartBtn.setFocusPainted(false);
+        restartBtn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(seekerWin ? new Color(180, 100, 100) : new Color(100, 160, 220), 2),
+                BorderFactory.createEmptyBorder(12, 40, 12, 40)));
 
-        ok.addActionListener(e -> dialog.dispose());
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
+        restartBtn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                restartBtn.setBackground(seekerWin ? new Color(160, 70, 70) : new Color(70, 140, 180));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                restartBtn.setBackground(seekerWin ? new Color(140, 60, 60) : new Color(60, 120, 160));
+            }
+        });
+
+        restartBtn.addActionListener(e -> {
+            // 오버레이 제거
+            gamePanel.remove(gameEndOverlay);
+            gameEndOverlay = null;
+            gamePanel.setLayout(null); // layout 유지
+            gamePanel.revalidate();
+            gamePanel.repaint();
+
+            // 게임 종료 후 다시 맵 선택 화면으로
+            resetToMapSelection();
+        });
+
+        bottom.add(restartBtn);
+
+        victoryPanel.add(banner, BorderLayout.CENTER);
+        victoryPanel.add(bottom, BorderLayout.SOUTH);
+
+        // 오버레이에 승리 패널 추가
+        gameEndOverlay.add(victoryPanel);
+
+        // 게임 패널에 오버레이 추가
+        gamePanel.add(gameEndOverlay);
+        gamePanel.setComponentZOrder(gameEndOverlay, 0); // 최상위로
+
+        gamePanel.revalidate();
+        gamePanel.repaint();
+    }
+
+    /**
+     * 게임 종료 후 맵 선택 화면으로 리셋
+     */
+    private void resetToMapSelection() {
+        // 게임 상태 초기화
+        currentState = GameState.WAITING;
+        mySelectedMap = null;
+        playerMapSelections.clear();
+        allPlayersSelected = false;
+        readyCountdown = -1;
+        isSeeker = false;
+        isAlive = true;
+
+        // 게임 데이터 초기화
+        players.clear();
+        objects.clear();
+        initialMapObjects.clear();
+
+        // UI 초기화
+        statusLabel.setText("🌙 숨을 장소를 선택하세요...");
+        mapStatusArea.setText("🗺️ 선택된 은신처:\n");
+
+        // 맵 선택 버튼 활성화 및 초기화
+        if (cityBtn != null) {
+            cityBtn.setEnabled(true);
+            cityBtn.setBackground(new Color(20, 100, 180).darker());
+            cityBtn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(80, 80, 120), 2),
+                    BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(new Color(20, 100, 180).brighter().brighter(), 1),
+                            BorderFactory.createEmptyBorder(20, 15, 20, 15))));
+        }
+        if (constructionBtn != null) {
+            constructionBtn.setEnabled(true);
+            constructionBtn.setBackground(new Color(180, 100, 20).darker());
+            constructionBtn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(80, 80, 120), 2),
+                    BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(new Color(180, 100, 20).brighter().brighter(), 1),
+                            BorderFactory.createEmptyBorder(20, 15, 20, 15))));
+        }
+        if (schoolBtn != null) {
+            schoolBtn.setEnabled(true);
+            schoolBtn.setBackground(new Color(20, 120, 60).darker());
+            schoolBtn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(80, 80, 120), 2),
+                    BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(new Color(20, 120, 60).brighter().brighter(), 1),
+                            BorderFactory.createEmptyBorder(20, 15, 20, 15))));
+        }
+
+        // 게임 패널에서 맵 선택 패널로 전환
+        remove(gamePanel);
+        add(mapSelectionPanel, BorderLayout.CENTER);
+        revalidate();
+        repaint();
+
+        // 서버에 준비 상태 전송 (필요시)
+        // out.println("READY_FOR_NEXT_GAME");
     }
 
     // ===== 네트워크 =====
@@ -1284,12 +1434,14 @@ public class GameClient extends JFrame {
                 currentState = GameState.ENDED;
                 String r = p[1];
                 if (r.startsWith("SEEKER_WIN")) {
-                    String w = r.split(":")[1];
+                    // GAME_END:SEEKER_WIN:술래이름
+                    String seekerName = (p.length >= 3) ? p[2] : "술래";
                     statusLabel.setText("🏆 게임 종료 - 술래 승리!");
-                    showGameEndDialog(true, w);
-                } else {
-                    statusLabel.setText("🏆 게임 종료 - 숨는 팀 승리!");
-                    showGameEndDialog(false, null);
+                    SwingUtilities.invokeLater(() -> showGameEndDialog(true, seekerName));
+                } else if (r.equals("HIDERS_WIN")) {
+                    // GAME_END:HIDERS_WIN
+                    statusLabel.setText("🏆 게임 종료 - 도망자 승리!");
+                    SwingUtilities.invokeLater(() -> showGameEndDialog(false, null));
                 }
             }
             case "GAME_RESET" -> {
@@ -1668,6 +1820,16 @@ public class GameClient extends JFrame {
                 hits.removeIf(h -> --h.life <= 0);
                 repaint();
             }).start();
+
+            // 리사이즈 시 오버레이 크기 조정
+            addComponentListener(new java.awt.event.ComponentAdapter() {
+                @Override
+                public void componentResized(java.awt.event.ComponentEvent e) {
+                    if (gameEndOverlay != null) {
+                        gameEndOverlay.setBounds(0, 0, getWidth(), getHeight());
+                    }
+                }
+            });
         }
 
         void spawnBulletTrail(double sx, double sy, double ex, double ey) {
