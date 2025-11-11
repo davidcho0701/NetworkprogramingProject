@@ -33,12 +33,16 @@ public class GameServer {
     private String[] currentObjectPool = new String[0];
     private Timer disguiseTimer;
 
+    // 맵 선택 관련
+    private final Map<String, String> playerMapSelections = new ConcurrentHashMap<>();
+    private boolean allPlayersSelected = false;
+
     enum GameState {
         WAITING, HIDING, PLAYING, ENDED
     }
 
     enum Theme {
-        SCHOOL, CONSTRUCTION, MILITARY
+        SCHOOL, CONSTRUCTION, CITY
     }
 
     static class PlayerData {
@@ -109,10 +113,11 @@ public class GameServer {
         Theme[] themes = Theme.values();
         currentTheme = themes[rand.nextInt(themes.length)];
         switch (currentTheme) {
-            case CONSTRUCTION -> objects = new String[] { "BOX", "BARREL", "CONE", "TIRE", "CRATE", "TABLE" };
-            case MILITARY -> objects = new String[] { "CRATE", "BOX", "TIRE", "BARREL", "CHAIR", "TABLE" };
+            case CONSTRUCTION -> objects = new String[] { "BOX", "CIRCLEBOX", "CON", "BRICK", "FENCE", "TIRE" };
+            case CITY -> objects = new String[] { "CON", "TIRE", "BLUE_CAR_H", "BLUE_CAR_V", "RED_CAR_H", "RED_CAR_V",
+                    "LIGHT", "BLUEMAN", "OLDMAN", "WALKMAN", "WALKWOMAN" };
             default ->
-                objects = new String[] { "BOX", "CHAIR", "TABLE", "PLANT", "LAMP", "BOOK", "BARREL", "TIRE", "CONE" };
+                objects = new String[] { "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "SET", "TRASH", "WHITECLEANER" };
         }
         currentObjectPool = objects;
 
@@ -220,6 +225,60 @@ public class GameServer {
     private void broadcast(String msg) {
         for (ClientHandler c : clients)
             c.send(msg);
+    }
+
+    // ====== 맵 선택 처리 ======
+    private synchronized void handleMapSelection(String playerId, String mapName) {
+        PlayerData player = players.get(playerId);
+        if (player == null)
+            return;
+
+        // 플레이어의 맵 선택 저장
+        playerMapSelections.put(player.name, mapName);
+
+        // 모든 클라이언트에게 현재 선택 상황 브로드캐스트
+        broadcastMapSelections();
+
+        // 모든 플레이어가 선택했는지 확인
+        checkAllPlayersSelected();
+    }
+
+    private void broadcastMapSelections() {
+        StringBuilder msg = new StringBuilder("MAP_SELECTIONS");
+        for (Map.Entry<String, String> entry : playerMapSelections.entrySet()) {
+            msg.append(":").append(entry.getKey()).append(":").append(entry.getValue());
+        }
+        broadcast(msg.toString());
+    }
+
+    private void checkAllPlayersSelected() {
+        if (playerMapSelections.size() >= players.size() && players.size() >= 2) {
+            allPlayersSelected = true;
+            broadcast("ALL_SELECTED");
+
+            // 가장 많이 선택된 맵으로 결정 (동점이면 랜덤)
+            Map<String, Integer> mapCounts = new HashMap<>();
+            for (String map : playerMapSelections.values()) {
+                mapCounts.put(map, mapCounts.getOrDefault(map, 0) + 1);
+            }
+
+            String selectedMap = mapCounts.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse("SCHOOL");
+
+            // 테마 설정
+            currentTheme = Theme.valueOf(selectedMap);
+
+            // 5초 후 게임 시작
+            Timer startTimer = new Timer();
+            startTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    startGame();
+                }
+            }, 5000);
+        }
     }
 
     // ====== 레이캐스트 사격 처리 ======
@@ -386,8 +445,13 @@ public class GameServer {
                     server.broadcast("PLAYER_LIST:" + getPlayerList());
                     server.broadcast("SYSTEM:" + name + "님이 입장했습니다.");
                 }
+                case "SELECT_MAP" -> {
+                    if (server.gameState == GameState.WAITING) {
+                        server.handleMapSelection(clientId, parts[1]);
+                    }
+                }
                 case "START_GAME" -> {
-                    if (server.gameState == GameState.WAITING)
+                    if (server.gameState == GameState.WAITING && server.allPlayersSelected)
                         server.startGame();
                 }
                 case "MOVE" -> {

@@ -56,11 +56,22 @@ public class GameClient extends JFrame {
     private JButton startBtn;
     private JLabel statusLabel;
 
+    // 맵 선택 관련 GUI
+    private JButton cityBtn, constructionBtn, schoolBtn;
+    private JPanel mapSelectionPanel;
+    private JTextArea mapStatusArea;
+
     // 상태
     private String myClientId, myName;
     private boolean isSeeker = false, isAlive = true;
     private GameState currentState = GameState.WAITING;
     private String currentTheme = "SCHOOL";
+
+    // 맵 선택 관련 상태
+    private String mySelectedMap = null;
+    private final Map<String, String> playerMapSelections = new ConcurrentHashMap<>();
+    private boolean allPlayersSelected = false;
+    private int readyCountdown = -1;
 
     // 월드/카메라
     private final int worldW = 2000, worldH = 1200;
@@ -107,7 +118,9 @@ public class GameClient extends JFrame {
 
     public GameClient() {
         setupGUI();
-        loadImages();
+        // ImageManager를 통해 기본 테마 이미지 로드
+        ImageManager.getInstance().loadAllImages();
+        loadImagesFromManager();
         connect();
         setupInput();
         startMoveLoop();
@@ -153,37 +166,63 @@ public class GameClient extends JFrame {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.setPreferredSize(new Dimension(0, 42));
         top.setBackground(new Color(30, 30, 35));
-        statusLabel = new JLabel("🎮 대기 중...");
+        statusLabel = new JLabel("🎮 맵을 선택하세요...");
         statusLabel.setForeground(Color.WHITE);
         statusLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 18));
         top.add(statusLabel);
         add(top, BorderLayout.NORTH);
 
-        // 중앙 게임판
+        // 중앙: 맵 선택 패널과 게임판을 전환
         gamePanel = new GamePanel();
-        add(gamePanel, BorderLayout.CENTER);
+
+        // 맵 선택 패널 생성
+        mapSelectionPanel = createMapSelectionPanel();
+
+        // 처음에는 맵 선택 패널 표시
+        add(mapSelectionPanel, BorderLayout.CENTER);
 
         // 우측 사이드
         JPanel right = new JPanel(new BorderLayout());
         right.setPreferredSize(new Dimension(320, 0));
         right.setBackground(new Color(25, 25, 28));
 
-        playerListArea = new JTextArea("👥 플레이어 목록:\n");
+        // 접속 클라이언트 현황
+        playerListArea = new JTextArea("👥 접속 클라이언트:\n");
         playerListArea.setEditable(false);
         playerListArea.setBackground(new Color(35, 35, 40));
         playerListArea.setForeground(Color.WHITE);
         playerListArea.setFont(new Font("Malgun Gothic", Font.PLAIN, 13));
-        right.add(new JScrollPane(playerListArea), BorderLayout.NORTH);
+        JScrollPane playerScroll = new JScrollPane(playerListArea);
+        playerScroll.setPreferredSize(new Dimension(320, 150));
+
+        // 맵 선택 현황
+        mapStatusArea = new JTextArea("🗺️ 맵 선택 현황:\n");
+        mapStatusArea.setEditable(false);
+        mapStatusArea.setBackground(new Color(40, 40, 45));
+        mapStatusArea.setForeground(Color.CYAN);
+        mapStatusArea.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
+        JScrollPane mapScroll = new JScrollPane(mapStatusArea);
+        mapScroll.setPreferredSize(new Dimension(320, 120));
 
         chatArea = new JTextArea("=== 채팅 ===\n");
         chatArea.setEditable(false);
         chatArea.setBackground(new Color(22, 22, 26));
         chatArea.setForeground(Color.LIGHT_GRAY);
         chatArea.setLineWrap(true);
-        right.add(new JScrollPane(chatArea), BorderLayout.CENTER);
+        JScrollPane chatScroll = new JScrollPane(chatArea);
 
+        // 우측 패널 구성
+        JPanel rightTop = new JPanel(new BorderLayout());
+        rightTop.add(playerScroll, BorderLayout.NORTH);
+        rightTop.add(mapScroll, BorderLayout.CENTER);
+
+        right.add(rightTop, BorderLayout.NORTH);
+        right.add(chatScroll, BorderLayout.CENTER);
+
+        // 시작 버튼은 모든 플레이어가 선택 완료 후 표시
         startBtn = new JButton("🎯 게임 시작");
         startBtn.addActionListener(e -> out.println("START_GAME"));
+        startBtn.setVisible(false); // 처음에는 숨김
         right.add(startBtn, BorderLayout.SOUTH);
 
         add(right, BorderLayout.EAST);
@@ -209,6 +248,243 @@ public class GameClient extends JFrame {
                 gamePanel.requestFocusInWindow();
             }
         });
+    }
+
+    /**
+     * 맵 선택 패널 생성
+     */
+    private JPanel createMapSelectionPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(25, 30, 35));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(20, 20, 20, 20);
+
+        // 제목
+        JLabel titleLabel = new JLabel("맵을 선택하세요");
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 32));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3;
+        panel.add(titleLabel, gbc);
+
+        // 안내 텍스트
+        JLabel infoLabel = new JLabel("모든 플레이어가 선택을 완료하면 게임이 시작됩니다");
+        infoLabel.setForeground(Color.LIGHT_GRAY);
+        infoLabel.setFont(new Font("Malgun Gothic", Font.PLAIN, 16));
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 3;
+        panel.add(infoLabel, gbc);
+
+        // 맵 선택 버튼들
+        gbc.gridwidth = 1;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+
+        // City 버튼
+        cityBtn = createMapButton("🏙️ City", "도시", new Color(70, 130, 180));
+        cityBtn.addActionListener(e -> selectMap("CITY"));
+        gbc.gridx = 0;
+        panel.add(cityBtn, gbc);
+
+        // Construction 버튼
+        constructionBtn = createMapButton("🏗️ Construction", "공사장", new Color(205, 133, 63));
+        constructionBtn.addActionListener(e -> selectMap("CONSTRUCTION"));
+        gbc.gridx = 1;
+        panel.add(constructionBtn, gbc);
+
+        // School 버튼
+        schoolBtn = createMapButton("🏫 School", "학교", new Color(60, 179, 113));
+        schoolBtn.addActionListener(e -> selectMap("SCHOOL"));
+        gbc.gridx = 2;
+        panel.add(schoolBtn, gbc);
+
+        return panel;
+    }
+
+    /**
+     * 맵 선택 버튼 생성
+     */
+    private JButton createMapButton(String title, String subtitle, Color color) {
+        JButton button = new JButton();
+        button.setLayout(new BorderLayout());
+        button.setPreferredSize(new Dimension(250, 200));
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createRaisedBevelBorder());
+
+        // 버튼 내용
+        JPanel content = new JPanel();
+        content.setOpaque(false);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+        JLabel titleLbl = new JLabel(title);
+        titleLbl.setForeground(Color.WHITE);
+        titleLbl.setFont(new Font("Malgun Gothic", Font.BOLD, 24));
+        titleLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel subtitleLbl = new JLabel(subtitle);
+        subtitleLbl.setForeground(Color.LIGHT_GRAY);
+        subtitleLbl.setFont(new Font("Malgun Gothic", Font.PLAIN, 16));
+        subtitleLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        content.add(Box.createVerticalGlue());
+        content.add(titleLbl);
+        content.add(Box.createVerticalStrut(10));
+        content.add(subtitleLbl);
+        content.add(Box.createVerticalGlue());
+
+        button.add(content, BorderLayout.CENTER);
+
+        // 호버 효과
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(color.brighter());
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(color);
+            }
+        });
+
+        return button;
+    }
+
+    /**
+     * 맵 선택 처리
+     */
+    private void selectMap(String mapName) {
+        if (mySelectedMap != null) {
+            return; // 이미 선택함
+        }
+
+        mySelectedMap = mapName;
+
+        // 선택된 버튼 표시 업데이트
+        updateMapButtonStates();
+
+        // 서버에 선택 전송
+        out.println("SELECT_MAP:" + mapName);
+
+        statusLabel.setText("🎮 " + getMapDisplayName(mapName) + " 선택 완료 - 다른 플레이어 대기 중...");
+    }
+
+    /**
+     * 맵 버튼 상태 업데이트
+     */
+    private void updateMapButtonStates() {
+        cityBtn.setEnabled(mySelectedMap == null);
+        constructionBtn.setEnabled(mySelectedMap == null);
+        schoolBtn.setEnabled(mySelectedMap == null);
+
+        // 선택된 버튼 강조
+        if ("CITY".equals(mySelectedMap)) {
+            cityBtn.setBackground(new Color(100, 150, 200));
+            cityBtn.setBorder(BorderFactory.createLineBorder(Color.YELLOW, 3));
+        } else if ("CONSTRUCTION".equals(mySelectedMap)) {
+            constructionBtn.setBackground(new Color(235, 163, 93));
+            constructionBtn.setBorder(BorderFactory.createLineBorder(Color.YELLOW, 3));
+        } else if ("SCHOOL".equals(mySelectedMap)) {
+            schoolBtn.setBackground(new Color(90, 199, 143));
+            schoolBtn.setBorder(BorderFactory.createLineBorder(Color.YELLOW, 3));
+        }
+    }
+
+    /**
+     * 맵 표시 이름 반환
+     */
+    private String getMapDisplayName(String mapName) {
+        return switch (mapName) {
+            case "CITY" -> "도시";
+            case "CONSTRUCTION" -> "공사장";
+            case "SCHOOL" -> "학교";
+            default -> mapName;
+        };
+    }
+
+    /**
+     * 맵 선택 현황 업데이트
+     */
+    private void updateMapSelections(String message) {
+        // MAP_SELECTIONS:player1:CITY:player2:SCHOOL:...
+        String[] parts = message.split(":");
+        playerMapSelections.clear();
+
+        for (int i = 1; i < parts.length; i += 2) {
+            if (i + 1 < parts.length) {
+                String playerName = parts[i];
+                String selectedMap = parts[i + 1];
+                playerMapSelections.put(playerName, selectedMap);
+            }
+        }
+
+        updateMapStatusDisplay();
+    }
+
+    /**
+     * 맵 선택 현황 표시 업데이트
+     */
+    private void updateMapStatusDisplay() {
+        StringBuilder sb = new StringBuilder("🗺️ 맵 선택 현황:\n");
+
+        if (playerMapSelections.isEmpty()) {
+            sb.append("아직 선택한 플레이어가 없습니다.\n");
+        } else {
+            for (Map.Entry<String, String> entry : playerMapSelections.entrySet()) {
+                String playerName = entry.getKey();
+                String mapName = entry.getValue();
+                String displayName = getMapDisplayName(mapName);
+
+                if (myName.equals(playerName)) {
+                    sb.append("✅ ").append(playerName).append(" → ").append(displayName).append(" (나)\n");
+                } else {
+                    sb.append("✅ ").append(playerName).append(" → ").append(displayName).append("\n");
+                }
+            }
+        }
+
+        mapStatusArea.setText(sb.toString());
+    }
+
+    /**
+     * 5초 카운트다운 시작
+     */
+    private void startReadyCountdown() {
+        javax.swing.Timer countdownTimer = new javax.swing.Timer(1000, null);
+        countdownTimer.addActionListener(e -> {
+            readyCountdown--;
+            if (readyCountdown > 0) {
+                statusLabel.setText("🎮 게임 시작까지 " + readyCountdown + "초...");
+            } else {
+                ((javax.swing.Timer) e.getSource()).stop();
+                // 맵 선택 패널에서 게임 패널로 전환
+                switchToGamePanel();
+            }
+        });
+
+        readyCountdown = 5;
+        countdownTimer.start();
+    }
+
+    /**
+     * 게임 패널로 전환
+     */
+    private void switchToGamePanel() {
+        // 중앙 패널을 맵 선택에서 게임 패널로 교체
+        remove(mapSelectionPanel);
+        add(gamePanel, BorderLayout.CENTER);
+        revalidate();
+        repaint();
+
+        // 포커스를 게임 패널로 이동
+        gamePanel.requestFocusInWindow();
     }
 
     // ===== 사망/게임 종료 테마 다이얼로그 =====
@@ -618,13 +894,28 @@ public class GameClient extends JFrame {
                 players.put(myClientId, me);
             }
             case "PLAYER_LIST" -> {
-                playerListArea.setText("👥 플레이어 목록:\n");
+                playerListArea.setText("👥 접속 클라이언트:\n");
                 if (p.length > 1 && !p[1].isEmpty()) {
                     for (String n : p[1].split(",")) {
                         if (!n.isEmpty())
                             playerListArea.append(" • " + n + "\n");
                     }
                 }
+            }
+            case "MAP_SELECTIONS" -> {
+                // MAP_SELECTIONS:player1:CITY:player2:SCHOOL:...
+                updateMapSelections(message);
+            }
+            case "ALL_SELECTED" -> {
+                // 모든 플레이어가 선택 완료
+                allPlayersSelected = true;
+                statusLabel.setText("🎮 모든 플레이어 선택 완료! 5초 후 게임 시작...");
+                startReadyCountdown();
+            }
+            case "READY_COUNTDOWN" -> {
+                // READY_COUNTDOWN:3
+                readyCountdown = Integer.parseInt(p[1]);
+                statusLabel.setText("🎮 게임 시작까지 " + readyCountdown + "초...");
             }
             case "SYSTEM", "CHAT" -> {
                 chatArea.append(p[1] + "\n");
@@ -633,8 +924,13 @@ public class GameClient extends JFrame {
             case "GAME_START" -> {
                 String[] a = message.split(":");
                 String seeker = a[2];
-                if (a.length > 3)
-                    currentTheme = a[3];
+                if (a.length > 3) {
+                    String newTheme = a[3];
+                    if (!currentTheme.equals(newTheme)) {
+                        currentTheme = newTheme;
+                        loadThemeImages(currentTheme); // 테마 변경 시 이미지 다시 로드
+                    }
+                }
                 isSeeker = myClientId != null && myClientId.equals(seeker);
                 isAlive = true;
                 currentState = GameState.HIDING;
@@ -1031,6 +1327,53 @@ public class GameClient extends JFrame {
     }
 
     // ===== 이미지 로딩 =====
+    /**
+     * ImageManager에서 이미지를 로드하여 캐시에 복사
+     */
+    private void loadImagesFromManager() {
+        ImageManager imgMgr = ImageManager.getInstance();
+
+        // 기본 이미지들 복사
+        copyImageFromManager("BG_TILE", imgMgr);
+        copyImageFromManager("SEEKER", imgMgr);
+
+        // 현재 테마의 모든 오브젝트 이미지 복사
+        String[] objectTypes = imgMgr.getCurrentThemeObjectTypes();
+        for (String type : objectTypes) {
+            copyImageFromManager(type, imgMgr);
+        }
+    }
+
+    /**
+     * 테마별 이미지 로드
+     */
+    private void loadThemeImages(String theme) {
+        // 테마명 변환 (서버에서 오는 테마명을 폴더명으로 매핑)
+        String folderName = switch (theme.toUpperCase()) {
+            case "CITY" -> "City";
+            case "CONSTRUCTION" -> "Construction_site";
+            case "SCHOOL" -> "School";
+            default -> "School";
+        };
+
+        ImageManager imgMgr = ImageManager.getInstance();
+        imgMgr.loadThemeImages(folderName);
+        loadImagesFromManager(); // 캐시 업데이트
+
+        System.out.println("테마 변경: " + theme + " -> " + folderName);
+    }
+
+    /**
+     * ImageManager에서 imageCache로 이미지 복사
+     */
+    private void copyImageFromManager(String key, ImageManager imgMgr) {
+        BufferedImage img = imgMgr.getImage(key);
+        if (img != null) {
+            imageCache.put(key, img);
+        }
+    }
+
+    @Deprecated
     private void loadImages() {
         loadImage("BG_TILE", "/assets/Background.png", "resources/assets/Background.png", "assets/Background.png");
         loadImage("SEEKER", "/assets/Man.png", "resources/assets/Man.png", "assets/Man.png");

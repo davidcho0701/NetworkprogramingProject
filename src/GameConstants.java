@@ -47,16 +47,37 @@ public class GameConstants {
 
     // 테마
     public enum Theme {
-        SCHOOL, CONSTRUCTION, MILITARY
+        SCHOOL, CONSTRUCTION, CITY
     }
 
-    // 오브젝트 타입들 (MAN 제외)
-    public static final String[] OBJECT_TYPES = {
-            "BOX", "CHAIR", "BARREL", "CONE", "TABLE", "TIRE"
+    // 테마별 오브젝트 타입들
+    public static final String[] CITY_OBJECTS = {
+            "CON", "TIRE", "BLUE_CAR_H", "BLUE_CAR_V", "RED_CAR_H", "RED_CAR_V",
+            "LIGHT", "BLUEMAN", "OLDMAN", "WALKMAN", "WALKWOMAN"
     };
 
-    // 변장 가능한 오브젝트들 (MAN 제외)
-    public static final String[] DISGUISE_TYPES = {
-            "BOX", "CHAIR", "BARREL", "CONE", "TABLE", "TIRE"
+    public static final String[] CONSTRUCTION_OBJECTS = {
+            "BOX", "CIRCLEBOX", "CON", "BRICK", "FENCE", "TIRE"
     };
+
+    public static final String[] SCHOOL_OBJECTS = {
+            "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "SET", "TRASH", "WHITECLEANER"
+    };
+
+    // 기본 오브젝트 타입들 (호환성을 위해 유지)
+    public static final String[] OBJECT_TYPES = SCHOOL_OBJECTS;
+
+    // 기본 변장 가능한 오브젝트들 (호환성을 위해 유지)
+    public static final String[] DISGUISE_TYPES = SCHOOL_OBJECTS;
+
+    /**
+     * 테마에 따른 오브젝트 타입 배열 반환
+     */
+    public static String[] getObjectsByTheme(Theme theme) {
+        return switch (theme) {
+            case CITY -> CITY_OBJECTS;
+            case CONSTRUCTION -> CONSTRUCTION_OBJECTS;
+            case SCHOOL -> SCHOOL_OBJECTS;
+        };
+    }
 }
