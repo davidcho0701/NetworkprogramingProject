@@ -1326,6 +1326,9 @@ public class GameClient extends JFrame {
                 me.alive = true;
                 me.isSeeker = isSeeker;
 
+                // 맵 선택 패널에서 게임 패널로 전환
+                switchToGamePanel();
+
                 // 게임 시작 시간 기록 제거 (술래는 HIDING 동안 이동 불가 정책)
 
                 // 모든 플레이어에게 카운트다운 표시
@@ -1857,7 +1860,9 @@ public class GameClient extends JFrame {
             drawBackground(g2);
 
             if (currentState == GameState.HIDING) {
-                // 배경에 객체가 이미 그려져 있으므로 객체 렌더링 제거
+                // 맵 객체 렌더링 (initialMapObjects)
+                for (ObjectInfo o : initialMapObjects)
+                    drawObject(g2, o.type, o.x, o.y, false, null);
                 // 숨는사람만 자기 자신 표시
                 if (!isSeeker && myClientId != null) {
                     PlayerData me = players.get(myClientId);
@@ -1868,7 +1873,9 @@ public class GameClient extends JFrame {
                 return;
             }
 
-            // 배경에 객체가 이미 그려져 있으므로 객체 렌더링 제거
+            // 맵 객체 렌더링 (objects)
+            for (ObjectInfo o : objects.values())
+                drawObject(g2, o.type, o.x, o.y, false, null);
 
             // 플레이어
             for (PlayerData p : players.values()) {
@@ -1910,15 +1917,18 @@ public class GameClient extends JFrame {
         }
 
         private void drawBackground(Graphics2D g) {
-            Image bgImage = imageCache.get("BG_TILE");
-            if (bgImage != null) {
-                // 전체 화면을 배경 이미지로 채움 (격자 무늬 없이)
-                g.drawImage(bgImage, (int) -camX, (int) -camY, worldW, worldH, null);
-            } else {
-                // 기본 배경색
-                g.setColor(new Color(60, 90, 70));
-                g.fillRect((int) -camX, (int) -camY, worldW, worldH);
+            // 테마별 배경색 설정 (빈 배경)
+            Color bgColor;
+            switch (currentTheme.toUpperCase()) {
+                case "CONSTRUCTION" -> bgColor = new Color(205, 170, 125); // 갈색 톤
+                case "SCHOOL" -> bgColor = new Color(222, 184, 135); // 나무 톤
+                case "CITY" -> bgColor = new Color(180, 180, 180); // 회색 아스팔트
+                default -> bgColor = new Color(200, 200, 200);
             }
+
+            // 배경 채우기
+            g.setColor(bgColor);
+            g.fillRect((int) -camX, (int) -camY, worldW, worldH);
 
             // 벽 테두리 그리기
             g.setColor(new Color(40, 40, 40));
@@ -1944,7 +1954,7 @@ public class GameClient extends JFrame {
             int y = (int) Math.round(p.y - camY);
             Image seeker = imageCache.get("SEEKER");
             if (seeker != null)
-                g.drawImage(seeker, x - 24, y - 32, 48, 64, null);
+                g.drawImage(seeker, x - 40, y - 50, 80, 100, null);
             else {
                 g.setColor(new Color(220, 50, 50));
                 g.fillOval(x - 20, y - 30, 40, 50);
@@ -1989,34 +1999,34 @@ public class GameClient extends JFrame {
 
             if (isPlayer && name != null) {
                 g.setColor(new Color(100, 255, 100, 100));
-                g.fillOval(x - 28, y - 28, 56, 56);
+                g.fillOval(x - 45, y - 45, 90, 90);
             }
 
             Image spr = imageCache.get(type);
             if (spr != null) {
-                g.drawImage(spr, x - 24, y - 24, 48, 48, null);
+                g.drawImage(spr, x - 40, y - 40, 80, 80, null);
             } else {
                 // 폴백 간단도형
                 switch (type) {
                     case "BOX" -> {
                         g.setColor(new Color(160, 82, 45));
-                        g.fillRect(x - 22, y - 22, 44, 44);
+                        g.fillRect(x - 40, y - 40, 80, 80);
                     }
                     case "BARREL" -> {
                         g.setColor(Color.GRAY);
-                        g.fillOval(x - 22, y - 28, 44, 56);
+                        g.fillOval(x - 40, y - 45, 80, 90);
                     }
                     case "CONE" -> {
                         g.setColor(new Color(255, 140, 0));
-                        int[] xp = { x, x - 20, x + 20 };
-                        int[] yp = { y - 30, y + 20, y + 20 };
+                        int[] xp = { x, x - 35, x + 35 };
+                        int[] yp = { y - 50, y + 30, y + 30 };
                         g.fillPolygon(xp, yp, 3);
                     }
                     case "TIRE" -> {
                         g.setColor(Color.BLACK);
-                        g.fillOval(x - 24, y - 24, 48, 48);
+                        g.fillOval(x - 40, y - 40, 80, 80);
                         g.setColor(Color.DARK_GRAY);
-                        g.fillOval(x - 12, y - 12, 24, 24);
+                        g.fillOval(x - 20, y - 20, 40, 40);
                     }
                     case "TABLE" -> {
                         g.setColor(new Color(150, 80, 40));

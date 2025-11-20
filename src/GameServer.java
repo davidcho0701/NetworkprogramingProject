@@ -142,7 +142,8 @@ public class GameServer {
             }
         }
 
-        // 배경에 객체가 이미 그려져 있으므로 객체 배치 로직 제거
+        // 맵별 고정 좌표에 객체 배치
+        placeMapObjects(currentTheme);
 
         broadcast("GAME_START:HIDING:" + seekerId + ":" + currentTheme.name());
         sendInitialMapState();
@@ -190,6 +191,131 @@ public class GameServer {
                 }, 10000, 10000);
             }
         }, HIDE_TIME_MS);
+    }
+
+    // 맵별 고정 좌표에 객체 배치
+    private void placeMapObjects(Theme theme) {
+        hiddenObjects.clear();
+        int objId = 0;
+
+        switch (theme) {
+            case CONSTRUCTION -> {
+                // Construction_site 맵 객체 배치 (이미지 참고)
+                // 벽돌 (brick)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BRICK", 100, 150, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BRICK", 100, 200, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BRICK", 550, 600, false, null));
+
+                // 통 (CIRCLEBOX)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CIRCLEBOX", 250, 170, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CIRCLEBOX", 250, 230, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CIRCLEBOX", 650, 450, false, null));
+
+                // 박스 (BOX)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 450, 150, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 600, 150, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 250, 300, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 100, 600, false, null));
+
+                // 타이어 (TIRE)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 100, 450, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 450, 350, false, null));
+
+                // 콘 (CON)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 200, 450, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 150, 530, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 300, 600, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 350, 600, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 600, 300, false, null));
+
+                // 펜스 (FENCE)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FENCE", 450, 450, false, null));
+            }
+            case SCHOOL -> {
+                // School 맵 객체 배치
+                // 의자 (CHAIR)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 120, 300, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 450, 300, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 200, 460, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 450, 460, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 600, 460, false, null));
+
+                // 책상 (DESK)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("DESK", 280, 320, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("DESK", 580, 320, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("DESK", 120, 560, false, null));
+
+                // 쓰레기통 (TRASH)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 40, 590, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 700, 210, false, null));
+
+                // 청소기 (BROWNCLEANER)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BROWNCLEANER", 25, 140, false, null));
+
+                // 청소기 (WHITECLEANER)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WHITECLEANER", 740, 140, false, null));
+
+                // 소화기 (FIRESTOP)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FIRESTOP", 25, 630, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FIRESTOP", 110, 630, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FIRESTOP", 720, 680, false, null));
+            }
+            case CITY -> {
+                // City 맵 객체 배치
+                // 콘 (CON)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 40, 30, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 370, 30, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 430, 240, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 430, 290, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 690, 590, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 1200, 150, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 1500, 800, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 900, 950, false, null));
+
+                // 쓰레기통 (TRASH)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 70, 200, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 700, 200, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 1300, 400, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 1700, 600, false, null));
+
+                // 타이어 (TIRE)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 620, 30, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 710, 30, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 620, 580, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 1100, 700, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 1600, 300, false, null));
+
+                // 차 (빨간색 수평)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_H", 70, 330, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_H", 460, 250, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_H", 1200, 500, false, null));
+
+                // 차 (파란색 수평)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_H", 70, 440, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_H", 580, 440, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_H", 1400, 700, false, null));
+
+                // 차 (파란색 수직)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_V", 550, 590, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_V", 1600, 850, false, null));
+
+                // 차 (빨간색 수직)
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_V", 900, 200, false, null));
+
+                // 사람들
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WOMAN", 140, 160, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("OLDMAN", 210, 190, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WALKMAN", 700, 130, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUEMAN", 100, 540, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WALKMAN", 430, 420, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WALKWOMAN", 1000, 350, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WOMAN", 1300, 900, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUEMAN", 1500, 450, false, null));
+                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("OLDMAN", 1700, 750, false, null));
+            }
+        }
+
+        System.out.println("[SERVER] " + theme + " 맵 객체 " + hiddenObjects.size() + "개 배치 완료");
     }
 
     private void sendInitialMapState() {
