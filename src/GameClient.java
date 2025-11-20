@@ -1857,9 +1857,7 @@ public class GameClient extends JFrame {
             drawBackground(g2);
 
             if (currentState == GameState.HIDING) {
-                // 초기 오브젝트
-                for (ObjectInfo o : initialMapObjects)
-                    drawObject(g2, o.type, o.x, o.y, false, null);
+                // 배경에 객체가 이미 그려져 있으므로 객체 렌더링 제거
                 // 숨는사람만 자기 자신 표시
                 if (!isSeeker && myClientId != null) {
                     PlayerData me = players.get(myClientId);
@@ -1870,9 +1868,7 @@ public class GameClient extends JFrame {
                 return;
             }
 
-            // 오브젝트
-            for (ObjectInfo o : objects.values())
-                drawObject(g2, o.type, o.x, o.y, false, null);
+            // 배경에 객체가 이미 그려져 있으므로 객체 렌더링 제거
 
             // 플레이어
             for (PlayerData p : players.values()) {

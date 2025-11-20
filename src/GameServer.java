@@ -108,16 +108,16 @@ public class GameServer {
         // 술래 선정
         seekerId = clients.get(rand.nextInt(clients.size())).clientId;
 
-        // 테마/오브젝트 풀
+        // 테마/오브젝트 풀 (background, Tagger 제외한 모든 객체)
         String[] objects;
         Theme[] themes = Theme.values();
         currentTheme = themes[rand.nextInt(themes.length)];
         switch (currentTheme) {
-            case CONSTRUCTION -> objects = new String[] { "BOX", "CIRCLEBOX", "CON", "BRICK", "FENCE", "TIRE" };
-            case CITY -> objects = new String[] { "CON", "TIRE", "BLUE_CAR_H", "BLUE_CAR_V", "RED_CAR_H", "RED_CAR_V",
-                    "LIGHT", "BLUEMAN", "OLDMAN", "WALKMAN", "WALKWOMAN" };
+            case CONSTRUCTION -> objects = new String[] { "BOX", "CIRCLEBOX", "CON", "TIRE", "BRICK", "FENCE" };
+            case CITY -> objects = new String[] { "CON", "OLDMAN", "BLUEMAN", "BLUE_CAR_H", "BLUE_CAR_V", "LIGHT",
+                    "RED_CAR_H", "RED_CAR_V", "TIRE", "TRASH", "WALKMAN", "WALKWOMAN", "WOMAN" };
             default ->
-                objects = new String[] { "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "SET", "TRASH", "WHITECLEANER" };
+                objects = new String[] { "CHAIR", "DESK", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER" };
         }
         currentObjectPool = objects;
 
@@ -142,14 +142,7 @@ public class GameServer {
             }
         }
 
-        // 가짜 오브젝트 배치
-        int fakeCount = 45;
-        for (int i = 0; i < fakeCount; i++) {
-            String t = objects[rand.nextInt(objects.length)];
-            double x = 80 + rand.nextInt(WORLD_W - 160);
-            double y = 80 + rand.nextInt(WORLD_H - 160);
-            hiddenObjects.put("OBJ_" + i, new ObjectInfo(t, x, y, false, null));
-        }
+        // 배경에 객체가 이미 그려져 있으므로 객체 배치 로직 제거
 
         broadcast("GAME_START:HIDING:" + seekerId + ":" + currentTheme.name());
         sendInitialMapState();

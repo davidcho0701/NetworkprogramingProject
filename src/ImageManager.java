@@ -46,34 +46,35 @@ public class ImageManager {
         switch (theme) {
             case "City":
                 loadImage("CON", themePath + "Con.png");
-                loadImage("TIRE", themePath + "Tire.png");
+                loadImage("OLDMAN", themePath + "OldMan.png");
+                loadImage("BLUEMAN", themePath + "blueMan.png");
                 loadImage("BLUE_CAR_H", themePath + "blue_car_horizontal.png");
                 loadImage("BLUE_CAR_V", themePath + "blue_car_verticle.png");
-                loadImage("RED_CAR_H", themePath + "red_car_horizontal.png");
-                loadImage("RED_CAR_V", themePath + "red_car_verticle.png");
                 loadImage("LIGHT", themePath + "light.png");
-                loadImage("BLUEMAN", themePath + "blueMan.png");
-                loadImage("OLDMAN", themePath + "oldMan.png");
+                loadImage("RED_CAR_H", themePath + "red_car_horizontal 2.png");
+                loadImage("RED_CAR_V", themePath + "red_car_verticle.png");
+                loadImage("TIRE", themePath + "tire.png");
+                loadImage("TRASH", themePath + "trash.png");
                 loadImage("WALKMAN", themePath + "walkman.png");
                 loadImage("WALKWOMAN", themePath + "walkwoman.png");
+                loadImage("WOMAN", themePath + "woman.png");
                 break;
 
             case "Construction_site":
                 loadImage("BOX", themePath + "Box.png");
                 loadImage("CIRCLEBOX", themePath + "CircleBox.png");
                 loadImage("CON", themePath + "Con.png");
+                loadImage("TIRE", themePath + "Tire.png");
                 loadImage("BRICK", themePath + "brick.png");
                 loadImage("FENCE", themePath + "fence.png");
-                loadImage("TIRE", themePath + "tire.png");
                 break;
 
             case "School":
             default:
                 loadImage("CHAIR", themePath + "Chair.png");
-                loadImage("TABLE", themePath + "Table.png");
+                loadImage("DESK", themePath + "Desk.png");
                 loadImage("BROWNCLEANER", themePath + "browncleaner.png");
                 loadImage("FIRESTOP", themePath + "firestop.png");
-                loadImage("SET", themePath + "set.png");
                 loadImage("TRASH", themePath + "trash.png");
                 loadImage("WHITECLEANER", themePath + "whitecleaner.png");
                 break;
@@ -225,12 +226,12 @@ public class ImageManager {
      */
     public String[] getThemeObjectTypes(String theme) {
         return switch (theme) {
-            case "City" -> new String[] { "CON", "TIRE", "BLUE_CAR_H", "BLUE_CAR_V", "RED_CAR_H", "RED_CAR_V", "LIGHT",
-                    "BLUEMAN", "OLDMAN", "WALKMAN", "WALKWOMAN" };
-            case "Construction_site" -> new String[] { "BOX", "CIRCLEBOX", "CON", "BRICK", "FENCE", "TIRE" };
+            case "City" -> new String[] { "CON", "OLDMAN", "BLUEMAN", "BLUE_CAR_H", "BLUE_CAR_V", "LIGHT",
+                    "RED_CAR_H", "RED_CAR_V", "TIRE", "TRASH", "WALKMAN", "WALKWOMAN", "WOMAN" };
+            case "Construction_site" -> new String[] { "BOX", "CIRCLEBOX", "CON", "TIRE", "BRICK", "FENCE" };
             case "School" ->
-                new String[] { "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "SET", "TRASH", "WHITECLEANER" };
-            default -> new String[] { "CHAIR", "TABLE" };
+                new String[] { "CHAIR", "DESK", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER" };
+            default -> new String[] { "CHAIR", "DESK" };
         };
     }
 
