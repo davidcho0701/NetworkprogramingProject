@@ -1807,8 +1807,10 @@ public class GameClient extends JFrame {
         private final List<HitEffect> hits = new ArrayList<>();
 
         class BulletTrail {
-            double sx, sy, ex, ey;
-            int life = 12;
+            double x, y; // 총알의 현재 위치
+            double targetY; // 최종 목표 Y 좌표
+            int life = 20; // 애니메이션 지속 시간
+            int maxLife = 20;
         }
 
         class HitEffect {
@@ -1836,11 +1838,11 @@ public class GameClient extends JFrame {
         }
 
         void spawnBulletTrail(double sx, double sy, double ex, double ey) {
+            // 목표 지점(ex, ey) 위에서 시작하여 아래로 떨어지는 총알
             BulletTrail t = new BulletTrail();
-            t.sx = sx;
-            t.sy = sy;
-            t.ex = ex;
-            t.ey = ey;
+            t.x = ex; // 목표 X 위치
+            t.y = ey - 400; // 목표 위 400px에서 시작
+            t.targetY = ey; // 목표 Y 위치
             trails.add(t);
         }
 
@@ -1892,15 +1894,36 @@ public class GameClient extends JFrame {
                 }
             }
 
-            // 총알 궤적
+            // 총알 애니메이션 (위에서 아래로)
             for (BulletTrail t : trails) {
-                int sx = (int) Math.round(t.sx - camX);
-                int sy = (int) Math.round(t.sy - camY);
-                int ex = (int) Math.round(t.ex - camX);
-                int ey = (int) Math.round(t.ey - camY);
+                // 진행 비율 계산
+                double progress = 1.0 - (t.life / (double) t.maxLife);
+
+                // 현재 Y 위치 계산 (위에서 아래로 이동)
+                double currentY = t.y + (t.targetY - t.y) * progress;
+
+                int x = (int) Math.round(t.x - camX);
+                int y = (int) Math.round(currentY - camY);
+
+                // 총알 그리기 (빨간색 원형 + 꾸멸
+                int alpha = Math.min(255, t.life * 12);
+
+                // 외부 글로우
+                g2.setColor(new Color(255, 100, 0, alpha / 3));
+                g2.fillOval(x - 20, y - 20, 40, 40);
+
+                // 중간 레이어
+                g2.setColor(new Color(255, 200, 0, alpha / 2));
+                g2.fillOval(x - 12, y - 12, 24, 24);
+
+                // 핵심
+                g2.setColor(new Color(255, 255, 255, alpha));
+                g2.fillOval(x - 6, y - 6, 12, 12);
+
+                // 경계선
                 g2.setStroke(new BasicStroke(2));
-                g2.setColor(new Color(255, 50, 50, 200));
-                g2.drawLine(sx, sy, ex, ey);
+                g2.setColor(new Color(255, 50, 50, alpha));
+                g2.drawOval(x - 15, y - 15, 30, 30);
             }
             // 히트 이펙트
             for (HitEffect h : hits) {
@@ -1917,18 +1940,23 @@ public class GameClient extends JFrame {
         }
 
         private void drawBackground(Graphics2D g) {
-            // 테마별 배경색 설정 (빈 배경)
-            Color bgColor;
-            switch (currentTheme.toUpperCase()) {
-                case "CONSTRUCTION" -> bgColor = new Color(205, 170, 125); // 갈색 톤
-                case "SCHOOL" -> bgColor = new Color(222, 184, 135); // 나무 톤
-                case "CITY" -> bgColor = new Color(180, 180, 180); // 회색 아스팔트
-                default -> bgColor = new Color(200, 200, 200);
+            // 배경 이미지 사용
+            Image bgImage = imageCache.get("BG_TILE");
+            if (bgImage != null) {
+                // 전체 화면을 배경 이미지로 채움
+                g.drawImage(bgImage, (int) -camX, (int) -camY, worldW, worldH, null);
+            } else {
+                // 기본 배경색 (이미지 로드 실패 시)
+                Color bgColor;
+                switch (currentTheme.toUpperCase()) {
+                    case "CONSTRUCTION" -> bgColor = new Color(205, 170, 125);
+                    case "SCHOOL" -> bgColor = new Color(222, 184, 135);
+                    case "CITY" -> bgColor = new Color(180, 180, 180);
+                    default -> bgColor = new Color(200, 200, 200);
+                }
+                g.setColor(bgColor);
+                g.fillRect((int) -camX, (int) -camY, worldW, worldH);
             }
-
-            // 배경 채우기
-            g.setColor(bgColor);
-            g.fillRect((int) -camX, (int) -camY, worldW, worldH);
 
             // 벽 테두리 그리기
             g.setColor(new Color(40, 40, 40));
@@ -1954,12 +1982,12 @@ public class GameClient extends JFrame {
             int y = (int) Math.round(p.y - camY);
             Image seeker = imageCache.get("SEEKER");
             if (seeker != null)
-                g.drawImage(seeker, x - 40, y - 50, 80, 100, null);
+                g.drawImage(seeker, x - 125, y - 150, 250, 300, null);
             else {
                 g.setColor(new Color(220, 50, 50));
-                g.fillOval(x - 20, y - 30, 40, 50);
+                g.fillOval(x - 62, y - 94, 125, 150);
                 g.setColor(Color.BLACK);
-                g.drawOval(x - 20, y - 30, 40, 50);
+                g.drawOval(x - 62, y - 94, 125, 150);
             }
             // 이름/HP
             g.setFont(new Font("Malgun Gothic", Font.BOLD, 12));
@@ -1999,34 +2027,34 @@ public class GameClient extends JFrame {
 
             if (isPlayer && name != null) {
                 g.setColor(new Color(100, 255, 100, 100));
-                g.fillOval(x - 45, y - 45, 90, 90);
+                g.fillOval(x - 130, y - 130, 260, 260);
             }
 
             Image spr = imageCache.get(type);
             if (spr != null) {
-                g.drawImage(spr, x - 40, y - 40, 80, 80, null);
+                g.drawImage(spr, x - 125, y - 125, 250, 250, null);
             } else {
                 // 폴백 간단도형
                 switch (type) {
                     case "BOX" -> {
                         g.setColor(new Color(160, 82, 45));
-                        g.fillRect(x - 40, y - 40, 80, 80);
+                        g.fillRect(x - 125, y - 125, 250, 250);
                     }
                     case "BARREL" -> {
                         g.setColor(Color.GRAY);
-                        g.fillOval(x - 40, y - 45, 80, 90);
+                        g.fillOval(x - 125, y - 140, 250, 280);
                     }
                     case "CONE" -> {
                         g.setColor(new Color(255, 140, 0));
-                        int[] xp = { x, x - 35, x + 35 };
-                        int[] yp = { y - 50, y + 30, y + 30 };
+                        int[] xp = { x, x - 110, x + 110 };
+                        int[] yp = { y - 156, y + 94, y + 94 };
                         g.fillPolygon(xp, yp, 3);
                     }
                     case "TIRE" -> {
                         g.setColor(Color.BLACK);
-                        g.fillOval(x - 40, y - 40, 80, 80);
+                        g.fillOval(x - 125, y - 125, 250, 250);
                         g.setColor(Color.DARK_GRAY);
-                        g.fillOval(x - 20, y - 20, 40, 40);
+                        g.fillOval(x - 62, y - 62, 125, 125);
                     }
                     case "TABLE" -> {
                         g.setColor(new Color(150, 80, 40));
