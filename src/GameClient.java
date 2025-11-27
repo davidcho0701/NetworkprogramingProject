@@ -291,70 +291,125 @@ public class GameClient extends JFrame {
      * 맵 선택 패널 생성
      */
     private JPanel createMapSelectionPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        // 숨바꼭질 분위기: 어두운 밤하늘 느낌
-        panel.setBackground(new Color(10, 15, 25));
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(40, 60, 90), 3),
-                BorderFactory.createEmptyBorder(30, 30, 30, 30)));
+        JPanel panel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // 배경 그라데이션 (어두운 밤하늘)
+                GradientPaint bgGrad = new GradientPaint(
+                        0, 0, new Color(8, 12, 22),
+                        0, getHeight(), new Color(15, 20, 35));
+                g2.setPaint(bgGrad);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+
+                // 별 효과
+                g2.setColor(new Color(255, 255, 255, 40));
+                Random starRand = new Random(12345); // 고정 시드로 일관성 유지
+                for (int i = 0; i < 80; i++) {
+                    int sx = starRand.nextInt(getWidth());
+                    int sy = starRand.nextInt(getHeight() / 2);
+                    int size = starRand.nextInt(3) + 1;
+                    g2.fillOval(sx, sy, size, size);
+                }
+
+                // 상단 빛 효과
+                RadialGradientPaint topGlow = new RadialGradientPaint(
+                        getWidth() / 2f, 50, getWidth() * 0.5f,
+                        new float[] { 0f, 0.5f, 1f },
+                        new Color[] { new Color(80, 120, 180, 30), new Color(40, 60, 100, 15), new Color(0, 0, 0, 0) });
+                g2.setPaint(topGlow);
+                g2.fillRect(0, 0, getWidth(), getHeight() / 2);
+
+                // 하단 안개 효과
+                GradientPaint fog = new GradientPaint(
+                        0, getHeight() - 150, new Color(20, 30, 50, 0),
+                        0, getHeight(), new Color(30, 40, 60, 80));
+                g2.setPaint(fog);
+                g2.fillRect(0, getHeight() - 150, getWidth(), 150);
+
+                g2.dispose();
+            }
+        };
+        panel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(20, 20, 20, 20);
+        gbc.insets = new Insets(15, 25, 15, 25);
 
-        // 게임 타이틀과 장식 - 숨바꼭질 테마
-        JPanel titlePanel = new JPanel();
+        // 게임 타이틀
+        JPanel titlePanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                // 투명 배경
+            }
+        };
         titlePanel.setOpaque(false);
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
-        JLabel gameTitle = new JLabel("🔦 PROP HUNT 2D 🔦");
-        gameTitle.setForeground(new Color(255, 230, 100)); // 손전등 빛 색상
-        gameTitle.setFont(new Font("Malgun Gothic", Font.BOLD, 40));
-        gameTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // 손전등 아이콘 + 타이틀
+        JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        titleRow.setOpaque(false);
 
-        JLabel titleLabel = new JLabel("🌙 숨을 장소를 선택하세요 🌙");
-        titleLabel.setForeground(new Color(180, 200, 255));
-        titleLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 26));
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel flashLeft = new JLabel("🔦");
+        flashLeft.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 42));
 
-        titlePanel.add(gameTitle);
-        titlePanel.add(Box.createVerticalStrut(12));
-        titlePanel.add(titleLabel);
+        JLabel gameTitle = new JLabel("PROP HUNT 2D");
+        gameTitle.setForeground(new Color(255, 245, 220));
+        gameTitle.setFont(new Font("Impact", Font.BOLD, 52));
+
+        JLabel flashRight = new JLabel("🔦");
+        flashRight.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 42));
+
+        titleRow.add(flashLeft);
+        titleRow.add(gameTitle);
+        titleRow.add(flashRight);
+
+        // 서브 타이틀
+        JLabel subtitleLabel = new JLabel("✨ 숨을 장소를 선택하세요 ✨");
+        subtitleLabel.setForeground(new Color(255, 220, 100));
+        subtitleLabel.setFont(new Font("Malgun Gothic", Font.BOLD, 28));
+        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // 안내 텍스트
+        JLabel infoLabel = new JLabel("👻 모두 준비되면 숨바꼭질이 시작됩니다... 👻");
+        infoLabel.setForeground(new Color(150, 160, 180));
+        infoLabel.setFont(new Font("Malgun Gothic", Font.ITALIC, 14));
+        infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        titlePanel.add(titleRow);
+        titlePanel.add(Box.createVerticalStrut(8));
+        titlePanel.add(subtitleLabel);
+        titlePanel.add(Box.createVerticalStrut(15));
+        titlePanel.add(infoLabel);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3;
         panel.add(titlePanel, gbc);
 
-        // 안내 텍스트를 숨바꼭질 분위기로
-        JLabel infoLabel = new JLabel("👻 모두 준비되면 숨바꼭질이 시작됩니다... 👻");
-        infoLabel.setForeground(new Color(160, 160, 180));
-        infoLabel.setFont(new Font("Malgun Gothic", Font.ITALIC, 15));
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 3;
-        panel.add(infoLabel, gbc);
-
         // 맵 선택 버튼들
         gbc.gridwidth = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
 
-        // City 버튼 - 미래도시 테마
-        cityBtn = createMapButton("🏙️ CITY", "도심의 그림자", new Color(20, 100, 180));
+        // City 버튼
+        cityBtn = createMapButton("🏙️ CITY", "도심의 그림자", new Color(30, 90, 160), "🌃");
         cityBtn.addActionListener(e -> selectMap("CITY"));
         gbc.gridx = 0;
         panel.add(cityBtn, gbc);
 
-        // Construction 버튼 - 건설현장 테마
-        constructionBtn = createMapButton("🏗️ SITE", "공사장의 어둠", new Color(180, 100, 20));
+        // Construction 버튼
+        constructionBtn = createMapButton("🚧 SITE", "공사장의 어둠", new Color(160, 90, 20), "🚧");
         constructionBtn.addActionListener(e -> selectMap("CONSTRUCTION"));
         gbc.gridx = 1;
         panel.add(constructionBtn, gbc);
 
-        // School 버튼 - 학교 테마
-        schoolBtn = createMapButton("🏫 SCHOOL", "학교의 적막", new Color(20, 120, 60));
+        // School 버튼
+        schoolBtn = createMapButton("🏫 SCHOOL", "학교의 적막", new Color(30, 110, 70), "📚");
         schoolBtn.addActionListener(e -> selectMap("SCHOOL"));
         gbc.gridx = 2;
         panel.add(schoolBtn, gbc);
@@ -365,98 +420,107 @@ public class GameClient extends JFrame {
     /**
      * 맵 선택 버튼 생성
      */
-    private JButton createMapButton(String title, String subtitle, Color color) {
-        JButton button = new JButton();
-        button.setLayout(new BorderLayout());
-        button.setPreferredSize(new Dimension(280, 260));
+    private JButton createMapButton(String title, String subtitle, Color color, String icon) {
+        JButton button = new JButton() {
+            private boolean isHovered = false;
 
-        // 어두운 숨바꼭질 분위기
-        button.setBackground(color.darker());
-        button.setForeground(Color.WHITE);
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth();
+                int h = getHeight();
+
+                // 배경 그라데이션
+                Color topColor = isHovered ? color.brighter() : color.darker().darker();
+                Color bottomColor = isHovered ? color : new Color(10, 15, 25);
+                GradientPaint bgGrad = new GradientPaint(0, 0, topColor, 0, h, bottomColor);
+                g2.setPaint(bgGrad);
+                g2.fillRoundRect(0, 0, w, h, 20, 20);
+
+                // 테두리 광택
+                if (isHovered) {
+                    g2.setColor(new Color(255, 255, 200, 100));
+                    g2.setStroke(new BasicStroke(4));
+                    g2.drawRoundRect(2, 2, w - 5, h - 5, 18, 18);
+                } else {
+                    g2.setColor(color.brighter());
+                    g2.setStroke(new BasicStroke(2));
+                    g2.drawRoundRect(1, 1, w - 3, h - 3, 18, 18);
+                }
+
+                // 내부 테두리
+                g2.setColor(new Color(255, 255, 255, 30));
+                g2.setStroke(new BasicStroke(1));
+                g2.drawRoundRect(8, 8, w - 17, h - 17, 12, 12);
+
+                // 상단 빛 반사 효과
+                GradientPaint shine = new GradientPaint(
+                        0, 0, new Color(255, 255, 255, isHovered ? 50 : 25),
+                        0, h / 3, new Color(255, 255, 255, 0));
+                g2.setPaint(shine);
+                g2.fillRoundRect(5, 5, w - 10, h / 3, 15, 15);
+
+                // 아이콘
+                g2.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
+                FontMetrics iconFm = g2.getFontMetrics();
+                g2.setColor(Color.WHITE);
+                g2.drawString(icon, (w - iconFm.stringWidth(icon)) / 2, h / 3);
+
+                // 타이틀
+                g2.setFont(new Font("Arial Black", Font.BOLD, 24));
+                FontMetrics titleFm = g2.getFontMetrics();
+                String displayTitle = title.replaceAll("🏙️|🚧|🏫", "").trim();
+                g2.setColor(Color.WHITE);
+                g2.drawString(displayTitle, (w - titleFm.stringWidth(displayTitle)) / 2, h / 2 + 15);
+
+                // 서브타이틀
+                g2.setFont(new Font("Malgun Gothic", Font.PLAIN, 14));
+                FontMetrics subFm = g2.getFontMetrics();
+                g2.setColor(new Color(200, 210, 230));
+                g2.drawString(subtitle, (w - subFm.stringWidth(subtitle)) / 2, h / 2 + 40);
+
+                // 상태 텍스트
+                String status = "[ 숨을 준비 완료 ]";
+                g2.setFont(new Font("Malgun Gothic", Font.BOLD, 12));
+                FontMetrics statusFm = g2.getFontMetrics();
+                g2.setColor(new Color(150, 255, 180, isHovered ? 255 : 180));
+                g2.drawString(status, (w - statusFm.stringWidth(status)) / 2, h - 35);
+
+                // 장식 점
+                g2.setColor(new Color(255, 255, 255, 100));
+                g2.setFont(new Font("Monospaced", Font.BOLD, 14));
+                String dots = "• • • • •";
+                FontMetrics dotFm = g2.getFontMetrics();
+                g2.drawString(dots, (w - dotFm.stringWidth(dots)) / 2, h - 15);
+
+                g2.dispose();
+            }
+
+            {
+                addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        isHovered = true;
+                        setCursor(new Cursor(Cursor.HAND_CURSOR));
+                        repaint();
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        isHovered = false;
+                        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                        repaint();
+                    }
+                });
+            }
+        };
+
+        button.setPreferredSize(new Dimension(220, 280));
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
         button.setFocusPainted(false);
-
-        // 미스터리한 테두리 스타일
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(80, 80, 120), 2),
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(color.brighter().brighter(), 1),
-                        BorderFactory.createEmptyBorder(20, 15, 20, 15))));
-
-        // 버튼 내용
-        JPanel content = new JPanel();
-        content.setOpaque(false);
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-
-        // 장식용 아이콘/구분선 - 숨바꼭질 테마
-        JLabel decorLine1 = new JLabel("· · · · · · · · ·");
-        decorLine1.setForeground(new Color(200, 200, 220, 150));
-        decorLine1.setFont(new Font("Monospaced", Font.BOLD, 16));
-        decorLine1.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel titleLbl = new JLabel(title);
-        titleLbl.setForeground(new Color(255, 255, 255));
-        titleLbl.setFont(new Font("Malgun Gothic", Font.BOLD, 20));
-        titleLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel subtitleLbl = new JLabel(subtitle);
-        subtitleLbl.setForeground(new Color(180, 200, 220));
-        subtitleLbl.setFont(new Font("Malgun Gothic", Font.ITALIC, 14));
-        subtitleLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel decorLine2 = new JLabel("· · · · · · · · ·");
-        decorLine2.setForeground(new Color(200, 200, 220, 150));
-        decorLine2.setFont(new Font("Monospaced", Font.BOLD, 16));
-        decorLine2.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // 숨바꼭질 관련 상태 텍스트
-        JLabel statusLbl = new JLabel("[ 숨을 준비 완료 ]");
-        statusLbl.setForeground(new Color(150, 230, 150, 200));
-        statusLbl.setFont(new Font("Malgun Gothic", Font.PLAIN, 13));
-        statusLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // 분위기 아이콘
-        JLabel iconLbl = new JLabel("👁️");
-        iconLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
-        iconLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        content.add(Box.createVerticalGlue());
-        content.add(iconLbl);
-        content.add(Box.createVerticalStrut(8));
-        content.add(decorLine1);
-        content.add(Box.createVerticalStrut(12));
-        content.add(titleLbl);
-        content.add(Box.createVerticalStrut(6));
-        content.add(subtitleLbl);
-        content.add(Box.createVerticalStrut(12));
-        content.add(statusLbl);
-        content.add(Box.createVerticalStrut(6));
-        content.add(decorLine2);
-        content.add(Box.createVerticalGlue());
-
-        button.add(content, BorderLayout.CENTER);
-
-        // 미스터리한 호버 효과
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(color);
-                button.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(255, 255, 150), 3),
-                        BorderFactory.createCompoundBorder(
-                                BorderFactory.createLineBorder(color.brighter().brighter(), 1),
-                                BorderFactory.createEmptyBorder(20, 15, 20, 15))));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(color.darker());
-                button.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(80, 80, 120), 2),
-                        BorderFactory.createCompoundBorder(
-                                BorderFactory.createLineBorder(color.brighter().brighter(), 1),
-                                BorderFactory.createEmptyBorder(20, 15, 20, 15))));
-            }
-        });
 
         return button;
     }
