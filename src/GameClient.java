@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Prop Hunt 2D - GameClient (Swing)
+ * FM - GameClient (Swing)
  * - 이미지 스프라이트/배경 타일
  * - 연속 이동(60FPS) + 빠른 속도
  * - 레이캐스트 사격(스페이스): 바라보는 방향으로 총알, 궤적/히트 이펙트 렌더
@@ -158,7 +158,7 @@ public class GameClient extends JFrame {
     }
 
     private void setupGUI() {
-        setTitle("Prop Hunt 2D");
+        setTitle("FM");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(1200, 800);
         setLayout(new BorderLayout());
@@ -264,12 +264,121 @@ public class GameClient extends JFrame {
 
         add(right, BorderLayout.EAST);
 
-        // 하단 채팅 입력
-        JPanel bottom = new JPanel(new BorderLayout());
-        bottom.setPreferredSize(new Dimension(0, 38));
-        chatInput = new JTextField();
+        // 하단 채팅 입력 - 눈에 띄는 디자인
+        JPanel bottom = new JPanel(new BorderLayout(10, 0)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // 배경 그라데이션
+                GradientPaint gp = new GradientPaint(0, 0, new Color(25, 35, 50), 0, getHeight(),
+                        new Color(15, 22, 35));
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+
+                // 상단 테두리 선
+                g2.setColor(new Color(60, 100, 140));
+                g2.fillRect(0, 0, getWidth(), 2);
+
+                g2.dispose();
+            }
+        };
+        bottom.setPreferredSize(new Dimension(0, 50));
+        bottom.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+
+        // 채팅 아이콘 레이블
+        JLabel chatIcon = new JLabel("💬");
+        chatIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        chatIcon.setForeground(new Color(100, 180, 255));
+
+        // 채팅 입력 필드 - 플레이스홀더 포함
+        final String placeholder = "메시지를 입력하세요... (Enter로 전송)";
+        chatInput = new JTextField() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // 플레이스홀더 표시
+                if (getText().isEmpty() && !isFocusOwner()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setColor(new Color(120, 140, 160));
+                    g2.setFont(getFont().deriveFont(Font.ITALIC));
+                    FontMetrics fm = g2.getFontMetrics();
+                    g2.drawString(placeholder, getInsets().left + 5,
+                            (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                    g2.dispose();
+                }
+            }
+        };
+        chatInput.setOpaque(true);
+        chatInput.setBackground(new Color(35, 45, 60));
+        chatInput.setForeground(new Color(230, 240, 255));
+        chatInput.setCaretColor(new Color(100, 200, 255));
+        chatInput.setFont(new Font("Malgun Gothic", Font.PLAIN, 14));
+        chatInput.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(70, 100, 140), 2),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)));
         chatInput.addActionListener(e -> sendChat());
+
+        // 포커스 효과
+        chatInput.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                chatInput.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(100, 180, 255), 2),
+                        BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+                chatInput.repaint();
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                chatInput.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(70, 100, 140), 2),
+                        BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+                chatInput.repaint();
+            }
+        });
+
+        // 전송 버튼
+        JButton sendButton = new JButton("전송") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                if (getModel().isPressed()) {
+                    g2.setColor(new Color(40, 120, 180));
+                } else if (getModel().isRollover()) {
+                    g2.setColor(new Color(60, 150, 220));
+                } else {
+                    g2.setColor(new Color(50, 130, 200));
+                }
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+
+                // 텍스트
+                g2.setColor(Color.WHITE);
+                g2.setFont(getFont());
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                g2.drawString(getText(), x, y);
+
+                g2.dispose();
+            }
+        };
+        sendButton.setPreferredSize(new Dimension(70, 34));
+        sendButton.setFont(new Font("Malgun Gothic", Font.BOLD, 13));
+        sendButton.setFocusPainted(false);
+        sendButton.setBorderPainted(false);
+        sendButton.setContentAreaFilled(false);
+        sendButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        sendButton.addActionListener(e -> sendChat());
+
+        bottom.add(chatIcon, BorderLayout.WEST);
         bottom.add(chatInput, BorderLayout.CENTER);
+        bottom.add(sendButton, BorderLayout.EAST);
         add(bottom, BorderLayout.SOUTH);
 
         // 포커스 유지
@@ -355,9 +464,9 @@ public class GameClient extends JFrame {
         JLabel flashLeft = new JLabel("🔦");
         flashLeft.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 42));
 
-        JLabel gameTitle = new JLabel("PROP HUNT 2D");
+        JLabel gameTitle = new JLabel("FM");
         gameTitle.setForeground(new Color(255, 245, 220));
-        gameTitle.setFont(new Font("Impact", Font.BOLD, 52));
+        gameTitle.setFont(new Font("Impact", Font.BOLD, 72));
 
         JLabel flashRight = new JLabel("🔦");
         flashRight.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 42));
@@ -1078,7 +1187,7 @@ public class GameClient extends JFrame {
 
     // ===== 커스텀 닉네임 입력 다이얼로그 =====
     private String showNameDialog() {
-        final JDialog dialog = new JDialog(this, "PROP HUNT 2D", true);
+        final JDialog dialog = new JDialog(this, "FM", true);
         dialog.setUndecorated(true);
 
         JPanel root = new JPanel(new BorderLayout()) {
@@ -1185,9 +1294,9 @@ public class GameClient extends JFrame {
         flashlightIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // 메인 타이틀
-        JLabel mainTitle = new JLabel("PROP HUNT 2D");
+        JLabel mainTitle = new JLabel("FM");
         mainTitle.setForeground(new Color(255, 255, 255));
-        mainTitle.setFont(new Font("Arial Black", Font.BOLD, 38));
+        mainTitle.setFont(new Font("Arial Black", Font.BOLD, 52));
         mainTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // 서브 타이틀
@@ -1503,7 +1612,7 @@ public class GameClient extends JFrame {
         switch (cmd) {
             case "JOINED" -> {
                 myClientId = p[1];
-                setTitle("Prop Hunt 2D - " + myName + " (ID: " + myClientId + ")");
+                setTitle("FM - " + myName + " (ID: " + myClientId + ")");
                 PlayerData me = players.getOrDefault(myClientId, new PlayerData());
                 me.id = myClientId;
                 me.name = myName;
