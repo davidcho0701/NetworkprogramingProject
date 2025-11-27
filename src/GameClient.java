@@ -1448,14 +1448,16 @@ public class GameClient extends JFrame {
                 }
             }
             case "GAME_RESET" -> {
-                currentState = GameState.WAITING;
-                statusLabel.setText("🎮 대기 중...");
-                players.clear();
-                objects.clear();
-                initialMapObjects.clear();
-                startBtn.setEnabled(true);
-                isSeeker = false;
-                isAlive = true;
+                // 게임 오버레이 제거 (아직 남아있다면)
+                if (gameEndOverlay != null) {
+                    gamePanel.remove(gameEndOverlay);
+                    gameEndOverlay = null;
+                    gamePanel.revalidate();
+                    gamePanel.repaint();
+                }
+
+                // 맵 선택 화면으로 리셋
+                resetToMapSelection();
             }
         }
         gamePanel.repaint();
@@ -1807,10 +1809,10 @@ public class GameClient extends JFrame {
         private final List<HitEffect> hits = new ArrayList<>();
 
         class BulletTrail {
-            double x, y; // 총알의 현재 위치
-            double targetY; // 최종 목표 Y 좌표
-            int life = 20; // 애니메이션 지속 시간
-            int maxLife = 20;
+            double sx, sy; // 시작 위치 (술래 위치)
+            double ex, ey; // 끝 위치 (목표 지점)
+            int life = 15; // 애니메이션 지속 시간
+            int maxLife = 15;
         }
 
         class HitEffect {
@@ -1838,11 +1840,12 @@ public class GameClient extends JFrame {
         }
 
         void spawnBulletTrail(double sx, double sy, double ex, double ey) {
-            // 목표 지점(ex, ey) 위에서 시작하여 아래로 떨어지는 총알
+            // 술래 위치(sx, sy)에서 목표 지점(ex, ey)으로 이동하는 총알
             BulletTrail t = new BulletTrail();
-            t.x = ex; // 목표 X 위치
-            t.y = ey - 400; // 목표 위 400px에서 시작
-            t.targetY = ey; // 목표 Y 위치
+            t.sx = sx;
+            t.sy = sy;
+            t.ex = ex;
+            t.ey = ey;
             trails.add(t);
         }
 
@@ -1879,10 +1882,12 @@ public class GameClient extends JFrame {
             for (ObjectInfo o : objects.values())
                 drawObject(g2, o.type, o.x, o.y, false, null);
 
-            // 플레이어
-            for (PlayerData p : players.values()) {
-                if (!p.alive)
-                    continue;
+            // 플레이어를 Y좌표 기준으로 정렬하여 렌더링 (Y가 작은 것이 먼저 = 뒤에 있음)
+            List<PlayerData> sortedPlayers = new ArrayList<>(players.values());
+            sortedPlayers.removeIf(p -> !p.alive);
+            sortedPlayers.sort((a, b) -> Double.compare(a.y, b.y));
+
+            for (PlayerData p : sortedPlayers) {
                 if (p.isSeeker)
                     drawSeeker(g2, p);
                 else {
@@ -1894,19 +1899,20 @@ public class GameClient extends JFrame {
                 }
             }
 
-            // 총알 애니메이션 (위에서 아래로)
+            // 총알 애니메이션 (시작점에서 끝점으로 이동)
             for (BulletTrail t : trails) {
                 // 진행 비율 계산
                 double progress = 1.0 - (t.life / (double) t.maxLife);
 
-                // 현재 Y 위치 계산 (위에서 아래로 이동)
-                double currentY = t.y + (t.targetY - t.y) * progress;
+                // 현재 위치 계산 (시작점에서 끝점으로 이동)
+                double currentX = t.sx + (t.ex - t.sx) * progress;
+                double currentY = t.sy + (t.ey - t.sy) * progress;
 
-                int x = (int) Math.round(t.x - camX);
+                int x = (int) Math.round(currentX - camX);
                 int y = (int) Math.round(currentY - camY);
 
-                // 총알 그리기 (빨간색 원형 + 꾸멸
-                int alpha = Math.min(255, t.life * 12);
+                // 총알 그리기
+                int alpha = Math.min(255, t.life * 17);
 
                 // 외부 글로우
                 g2.setColor(new Color(255, 100, 0, alpha / 3));
@@ -1982,21 +1988,21 @@ public class GameClient extends JFrame {
             int y = (int) Math.round(p.y - camY);
             Image seeker = imageCache.get("SEEKER");
             if (seeker != null)
-                g.drawImage(seeker, x - 125, y - 150, 250, 300, null);
+                g.drawImage(seeker, x - 50, y - 60, 100, 120, null);
             else {
                 g.setColor(new Color(220, 50, 50));
-                g.fillOval(x - 62, y - 94, 125, 150);
+                g.fillOval(x - 25, y - 38, 50, 60);
                 g.setColor(Color.BLACK);
-                g.drawOval(x - 62, y - 94, 125, 150);
+                g.drawOval(x - 25, y - 38, 50, 60);
             }
             // 이름/HP
             g.setFont(new Font("Malgun Gothic", Font.BOLD, 12));
             String info = p.name + " [HP:" + p.hp + "]";
             int w = g.getFontMetrics().stringWidth(info);
             g.setColor(new Color(0, 0, 0, 160));
-            g.fillRoundRect(x - w / 2 - 4, y - 52, w + 8, 18, 6, 6);
+            g.fillRoundRect(x - w / 2 - 4, y - 72, w + 8, 18, 6, 6);
             g.setColor(Color.WHITE);
-            g.drawString(info, x - w / 2, y - 38);
+            g.drawString(info, x - w / 2, y - 58);
 
             // 조준 십자선 (내가 술래일 때만)
             if (myClientId != null && p.id.equals(myClientId) && isSeeker && isAlive
@@ -2027,42 +2033,42 @@ public class GameClient extends JFrame {
 
             if (isPlayer && name != null) {
                 g.setColor(new Color(100, 255, 100, 100));
-                g.fillOval(x - 130, y - 130, 260, 260);
+                g.fillOval(x - 45, y - 45, 90, 90);
             }
 
             Image spr = imageCache.get(type);
             if (spr != null) {
-                g.drawImage(spr, x - 125, y - 125, 250, 250, null);
+                g.drawImage(spr, x - 40, y - 40, 80, 80, null);
             } else {
                 // 폴백 간단도형
                 switch (type) {
                     case "BOX" -> {
                         g.setColor(new Color(160, 82, 45));
-                        g.fillRect(x - 125, y - 125, 250, 250);
+                        g.fillRect(x - 40, y - 40, 80, 80);
                     }
                     case "BARREL" -> {
                         g.setColor(Color.GRAY);
-                        g.fillOval(x - 125, y - 140, 250, 280);
+                        g.fillOval(x - 40, y - 45, 80, 90);
                     }
                     case "CONE" -> {
                         g.setColor(new Color(255, 140, 0));
-                        int[] xp = { x, x - 110, x + 110 };
-                        int[] yp = { y - 156, y + 94, y + 94 };
+                        int[] xp = { x, x - 35, x + 35 };
+                        int[] yp = { y - 50, y + 30, y + 30 };
                         g.fillPolygon(xp, yp, 3);
                     }
                     case "TIRE" -> {
                         g.setColor(Color.BLACK);
-                        g.fillOval(x - 125, y - 125, 250, 250);
+                        g.fillOval(x - 40, y - 40, 80, 80);
                         g.setColor(Color.DARK_GRAY);
-                        g.fillOval(x - 62, y - 62, 125, 125);
+                        g.fillOval(x - 20, y - 20, 40, 40);
                     }
                     case "TABLE" -> {
                         g.setColor(new Color(150, 80, 40));
-                        g.fillRect(x - 35, y - 8, 70, 12);
+                        g.fillRect(x - 35, y - 8, 70, 16);
                     }
                     case "CHAIR" -> {
                         g.setColor(new Color(139, 69, 19));
-                        g.fillRect(x - 18, y - 8, 36, 8);
+                        g.fillRect(x - 18, y - 8, 36, 16);
                     }
                     default -> {
                         // 알 수 없는 타입 기본 사각형 표시(가시성 확보)

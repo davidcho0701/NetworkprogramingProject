@@ -61,7 +61,7 @@ public class GameConstants {
     };
 
     public static final String[] SCHOOL_OBJECTS = {
-            "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "SET", "TRASH", "WHITECLEANER"
+            "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER"
     };
 
     // 기본 오브젝트 타입들 (호환성을 위해 유지)

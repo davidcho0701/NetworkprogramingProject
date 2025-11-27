@@ -109,15 +109,14 @@ public class GameServer {
         seekerId = clients.get(rand.nextInt(clients.size())).clientId;
 
         // 테마/오브젝트 풀 (background, Tagger 제외한 모든 객체)
+        // currentTheme은 checkAllPlayersSelected()에서 이미 설정됨
         String[] objects;
-        Theme[] themes = Theme.values();
-        currentTheme = themes[rand.nextInt(themes.length)];
         switch (currentTheme) {
             case CONSTRUCTION -> objects = new String[] { "BOX", "CIRCLEBOX", "CON", "TIRE", "BRICK", "FENCE" };
             case CITY -> objects = new String[] { "CON", "OLDMAN", "BLUEMAN", "BLUE_CAR_H", "BLUE_CAR_V", "LIGHT",
                     "RED_CAR_H", "RED_CAR_V", "TIRE", "TRASH", "WALKMAN", "WALKWOMAN", "WOMAN" };
             default ->
-                objects = new String[] { "CHAIR", "DESK", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER" };
+                objects = new String[] { "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER" };
         }
         currentObjectPool = objects;
 
@@ -193,129 +192,58 @@ public class GameServer {
         }, HIDE_TIME_MS);
     }
 
-    // 맵별 고정 좌표에 객체 배치
+    // 맵별 랜덤 객체 배치 (그리드 기반 골고루 분포)
     private void placeMapObjects(Theme theme) {
         hiddenObjects.clear();
         int objId = 0;
 
+        // 테마별 객체 풀
+        String[] objectPool;
         switch (theme) {
-            case CONSTRUCTION -> {
-                // Construction_site 맵 객체 배치 (이미지 참고)
-                // 벽돌 (brick)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BRICK", 100, 150, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BRICK", 100, 200, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BRICK", 550, 600, false, null));
+            case CONSTRUCTION -> objectPool = new String[] { "BOX", "CIRCLEBOX", "CON", "TIRE", "BRICK", "FENCE" };
+            case CITY -> objectPool = new String[] { "CON", "OLDMAN", "BLUEMAN", "BLUE_CAR_H", "BLUE_CAR_V", "LIGHT",
+                    "RED_CAR_H", "RED_CAR_V", "TIRE", "TRASH", "WALKMAN", "WALKWOMAN", "WOMAN" };
+            default ->
+                objectPool = new String[] { "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER" };
+        }
 
-                // 통 (CIRCLEBOX)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CIRCLEBOX", 250, 170, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CIRCLEBOX", 250, 230, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CIRCLEBOX", 650, 450, false, null));
+        // 그리드 기반 랜덤 배치 (맵을 셀로 나누고 각 셀에 랜덤하게 배치)
+        int gridCols = 10; // 가로 10칸
+        int gridRows = 6; // 세로 6칸
+        int cellWidth = WORLD_W / gridCols;
+        int cellHeight = WORLD_H / gridRows;
+        int margin = 80; // 가장자리 여백
 
-                // 박스 (BOX)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 450, 150, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 600, 150, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 250, 300, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BOX", 100, 600, false, null));
+        // 각 셀에 1~2개의 객체 배치 (80%의 셀에 배치)
+        for (int row = 0; row < gridRows; row++) {
+            for (int col = 0; col < gridCols; col++) {
+                // 80% 확률로 배치
+                if (rand.nextDouble() < 0.8) {
+                    // 셀 내 랜덤 위치
+                    int cellX = col * cellWidth + margin;
+                    int cellY = row * cellHeight + margin;
+                    int maxX = (col + 1) * cellWidth - margin;
+                    int maxY = (row + 1) * cellHeight - margin;
 
-                // 타이어 (TIRE)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 100, 450, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 450, 350, false, null));
+                    if (maxX > cellX && maxY > cellY) {
+                        double x = cellX + rand.nextInt(maxX - cellX);
+                        double y = cellY + rand.nextInt(maxY - cellY);
+                        String objType = objectPool[rand.nextInt(objectPool.length)];
+                        hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo(objType, x, y, false, null));
 
-                // 콘 (CON)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 200, 450, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 150, 530, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 300, 600, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 350, 600, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 600, 300, false, null));
-
-                // 펜스 (FENCE)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FENCE", 450, 450, false, null));
-            }
-            case SCHOOL -> {
-                // School 맵 객체 배치
-                // 의자 (CHAIR)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 120, 300, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 450, 300, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 200, 460, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 450, 460, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CHAIR", 600, 460, false, null));
-
-                // 책상 (DESK)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("DESK", 280, 320, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("DESK", 580, 320, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("DESK", 120, 560, false, null));
-
-                // 쓰레기통 (TRASH)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 40, 590, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 700, 210, false, null));
-
-                // 청소기 (BROWNCLEANER)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BROWNCLEANER", 25, 140, false, null));
-
-                // 청소기 (WHITECLEANER)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WHITECLEANER", 740, 140, false, null));
-
-                // 소화기 (FIRESTOP)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FIRESTOP", 25, 630, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FIRESTOP", 110, 630, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("FIRESTOP", 720, 680, false, null));
-            }
-            case CITY -> {
-                // City 맵 객체 배치
-                // 콘 (CON)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 40, 30, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 370, 30, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 430, 240, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 430, 290, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 690, 590, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 1200, 150, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 1500, 800, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("CON", 900, 950, false, null));
-
-                // 쓰레기통 (TRASH)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 70, 200, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 700, 200, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 1300, 400, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TRASH", 1700, 600, false, null));
-
-                // 타이어 (TIRE)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 620, 30, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 710, 30, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 620, 580, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 1100, 700, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("TIRE", 1600, 300, false, null));
-
-                // 차 (빨간색 수평)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_H", 70, 330, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_H", 460, 250, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_H", 1200, 500, false, null));
-
-                // 차 (파란색 수평)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_H", 70, 440, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_H", 580, 440, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_H", 1400, 700, false, null));
-
-                // 차 (파란색 수직)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_V", 550, 590, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUE_CAR_V", 1600, 850, false, null));
-
-                // 차 (빨간색 수직)
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("RED_CAR_V", 900, 200, false, null));
-
-                // 사람들
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WOMAN", 140, 160, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("OLDMAN", 210, 190, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WALKMAN", 700, 130, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUEMAN", 100, 540, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WALKMAN", 430, 420, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WALKWOMAN", 1000, 350, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("WOMAN", 1300, 900, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("BLUEMAN", 1500, 450, false, null));
-                hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo("OLDMAN", 1700, 750, false, null));
+                        // 30% 확률로 추가 객체
+                        if (rand.nextDouble() < 0.3) {
+                            double x2 = cellX + rand.nextInt(maxX - cellX);
+                            double y2 = cellY + rand.nextInt(maxY - cellY);
+                            String objType2 = objectPool[rand.nextInt(objectPool.length)];
+                            hiddenObjects.put("OBJ_" + (objId++), new ObjectInfo(objType2, x2, y2, false, null));
+                        }
+                    }
+                }
             }
         }
 
-        System.out.println("[SERVER] " + theme + " 맵 객체 " + hiddenObjects.size() + "개 배치 완료");
+        System.out.println("[SERVER] " + theme + " 맵 객체 " + hiddenObjects.size() + "개 랜덤 배치 완료");
     }
 
     private void sendInitialMapState() {
@@ -517,10 +445,29 @@ public class GameServer {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
+                resetGame();
                 broadcast("GAME_RESET");
-                gameState = GameState.WAITING;
             }
         }, 5000);
+    }
+
+    private synchronized void resetGame() {
+        gameState = GameState.WAITING;
+        seekerId = null;
+        alivePlayers.clear();
+        hiddenObjects.clear();
+        playerMapSelections.clear();
+        allPlayersSelected = false;
+
+        // 플레이어 상태 초기화 (연결은 유지)
+        for (PlayerData p : players.values()) {
+            p.hp = 100;
+            p.alive = true;
+            p.isSeeker = false;
+            p.disguise = null;
+            p.x = 100;
+            p.y = 100;
+        }
     }
 
     // ====== 클라이언트 핸들러 ======

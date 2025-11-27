@@ -72,7 +72,7 @@ public class ImageManager {
             case "School":
             default:
                 loadImage("CHAIR", themePath + "Chair.png");
-                loadImage("DESK", themePath + "Desk.png");
+                loadImage("TABLE", themePath + "Table.png");
                 loadImage("BROWNCLEANER", themePath + "browncleaner.png");
                 loadImage("FIRESTOP", themePath + "firestop.png");
                 loadImage("TRASH", themePath + "trash.png");
@@ -230,8 +230,8 @@ public class ImageManager {
                     "RED_CAR_H", "RED_CAR_V", "TIRE", "TRASH", "WALKMAN", "WALKWOMAN", "WOMAN" };
             case "Construction_site" -> new String[] { "BOX", "CIRCLEBOX", "CON", "TIRE", "BRICK", "FENCE" };
             case "School" ->
-                new String[] { "CHAIR", "DESK", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER" };
-            default -> new String[] { "CHAIR", "DESK" };
+                new String[] { "CHAIR", "TABLE", "BROWNCLEANER", "FIRESTOP", "TRASH", "WHITECLEANER" };
+            default -> new String[] { "CHAIR", "TABLE" };
         };
     }
 
