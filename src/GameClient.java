@@ -1976,8 +1976,6 @@ public class GameClient extends JFrame {
 
     private void startMoveLoop() {
         new javax.swing.Timer(16, e -> {
-            if (!isAlive)
-                return;
             if (!(currentState == GameState.HIDING || currentState == GameState.PLAYING))
                 return;
             if (myClientId == null)
@@ -1987,33 +1985,52 @@ public class GameClient extends JFrame {
             if (me == null)
                 return;
 
-            // 술래는 HIDING 동안(초반 20초) 이동 불가
-            if (isSeeker && currentState == GameState.HIDING) {
-                return;
-            }
+            // 살아있을 때는 기존 플레이어 이동 로직 유지
+            if (isAlive) {
+                // 술래는 HIDING 동안(초반 20초) 이동 불가
+                if (isSeeker && currentState == GameState.HIDING) {
+                    return;
+                }
 
-            double dx = (kRight ? 1 : 0) - (kLeft ? 1 : 0);
-            double dy = (kDown ? 1 : 0) - (kUp ? 1 : 0);
-            if (dx != 0 || dy != 0) {
-                double n = Math.hypot(dx, dy);
-                dx /= n;
-                dy /= n;
+                double dx = (kRight ? 1 : 0) - (kLeft ? 1 : 0);
+                double dy = (kDown ? 1 : 0) - (kUp ? 1 : 0);
+                if (dx != 0 || dy != 0) {
+                    double n = Math.hypot(dx, dy);
+                    dx /= n;
+                    dy /= n;
 
-                // 플레이어 타입에 따른 속도 적용
-                double speed = isSeeker ? SEEKER_MOVE_SPEED : HIDER_MOVE_SPEED;
+                    // 플레이어 타입에 따른 속도 적용
+                    double speed = isSeeker ? SEEKER_MOVE_SPEED : HIDER_MOVE_SPEED;
 
-                // 벽 충돌 방지를 위한 경계 확인
-                double newX = clamp(me.x + dx * speed, MIN_X, MAX_X);
-                double newY = clamp(me.y + dy * speed, MIN_Y, MAX_Y);
+                    // 벽 충돌 방지를 위한 경계 확인
+                    double newX = clamp(me.x + dx * speed, MIN_X, MAX_X);
+                    double newY = clamp(me.y + dy * speed, MIN_Y, MAX_Y);
 
-                me.x = newX;
-                me.y = newY;
-                // 바라보는 방향 갱신
-                faceDX = dx;
-                faceDY = dy;
-                out.println("MOVE:" + me.x + ":" + me.y);
-                updateCameraToMe();
-                gamePanel.repaint();
+                    me.x = newX;
+                    me.y = newY;
+                    // 바라보는 방향 갱신
+                    faceDX = dx;
+                    faceDY = dy;
+                    out.println("MOVE:" + me.x + ":" + me.y);
+                    updateCameraToMe();
+                    gamePanel.repaint();
+                }
+            } else {
+                // 죽은(관전) 상태: 플레이어 위치는 변경하지 않고 카메라만 WASD로 이동 가능하도록 처리
+                double cdx = (kRight ? 1 : 0) - (kLeft ? 1 : 0);
+                double cdy = (kDown ? 1 : 0) - (kUp ? 1 : 0);
+                if (cdx != 0 || cdy != 0) {
+                    double n = Math.hypot(cdx, cdy);
+                    cdx /= n;
+                    cdy /= n;
+                    // 관전 카메라 속도 (픽셀/프레임)
+                    double camSpeed = 12.0; // 필요시 조정
+                    double vw = gamePanel.getWidth();
+                    double vh = gamePanel.getHeight();
+                    camX = clamp(camX + cdx * camSpeed, 0, Math.max(0, worldW - vw));
+                    camY = clamp(camY + cdy * camSpeed, 0, Math.max(0, worldH - vh));
+                    gamePanel.repaint();
+                }
             }
         }).start();
     }
@@ -2371,29 +2388,52 @@ public class GameClient extends JFrame {
             int x = (int) Math.round(wx - camX);
             int y = (int) Math.round(wy - camY);
 
+            // 학교 맵에서는 오브젝트 이미지를 더 크게 표시
+            // 소화기(FIRESTOP) 같은 크기의 아이템들은 100px, 의자/책상 등은 120px
+            int baseSize = 80;
+            int size = baseSize;
+            if ("SCHOOL".equalsIgnoreCase(currentTheme)) {
+                // 학교맵에서 특정 오브젝트들을 더 크게 (소화기는 100px, 나머지 학용품은 120px)
+                if ("FIRESTOP".equalsIgnoreCase(type)) {
+                    size = 100;
+                } else if ("CHAIR".equalsIgnoreCase(type) || "TABLE".equalsIgnoreCase(type) ||
+                           "BROWNCLEANER".equalsIgnoreCase(type) || "WHITECLEANER".equalsIgnoreCase(type) ||
+                           "TRASH".equalsIgnoreCase(type)) {
+                    size = 120; // 의자, 책상, 청소용품, 휴지통은 소화기보다 더 크게
+                }
+            }
+            double scale = (double) size / baseSize;
+
             if (isPlayer && name != null) {
+                int ph = (int) Math.round(size + 10);
                 g.setColor(new Color(100, 255, 100, 100));
-                g.fillOval(x - 45, y - 45, 90, 90);
+                g.fillOval(x - ph / 2, y - ph / 2, ph, ph);
             }
 
             Image spr = imageCache.get(type);
             if (spr != null) {
-                g.drawImage(spr, x - 40, y - 40, 80, 80, null);
+                g.drawImage(spr, x - size / 2, y - size / 2, size, size, null);
             } else {
-                // 폴백 간단도형
+                // 폴백 간단도형 (기존 80px 기반을 scale로 조정)
                 switch (type) {
                     case "BOX" -> {
                         g.setColor(new Color(160, 82, 45));
-                        g.fillRect(x - 40, y - 40, 80, 80);
+                        int w = (int) Math.round(80 * scale);
+                        g.fillRect(x - w / 2, y - w / 2, w, w);
                     }
                     case "BARREL" -> {
                         g.setColor(Color.GRAY);
-                        g.fillOval(x - 40, y - 45, 80, 90);
+                        int w = (int) Math.round(80 * scale);
+                        int h = (int) Math.round(90 * scale);
+                        g.fillOval(x - w / 2, y - h / 2, w, h);
                     }
                     case "CONE" -> {
                         g.setColor(new Color(255, 140, 0));
-                        int[] xp = { x, x - 35, x + 35 };
-                        int[] yp = { y - 50, y + 30, y + 30 };
+                        int dx = (int) Math.round(35 * scale);
+                        int top = (int) Math.round(50 * scale);
+                        int bottom = (int) Math.round(30 * scale);
+                        int[] xp = { x, x - dx, x + dx };
+                        int[] yp = { y - top, y + bottom, y + bottom };
                         g.fillPolygon(xp, yp, 3);
                     }
                     case "TIRE" -> {

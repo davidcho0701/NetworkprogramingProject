@@ -21,6 +21,7 @@ public class GameServerModular {
     private GameConstants.Theme currentTheme = GameConstants.Theme.SCHOOL;
     private List<GameData.ObjectInfo> initialMapObjects;
     private long gameStartTime = 0; // 게임 시작 시간
+    private Timer gameTimer = null; // PLAYING 시계용 타이머
 
     public static void main(String[] args) {
         new GameServerModular().start();
@@ -103,6 +104,9 @@ public class GameServerModular {
                     if (gameState == GameConstants.GameState.HIDING) {
                         gameState = GameConstants.GameState.PLAYING;
                         broadcast(NetworkProtocol.MSG_GAME_STATE + ":PLAYING");
+                        
+                        // PLAYING 상태에서 1분 제한 시간 타이머 시작
+                        startGameTimeLimit();
                     }
                 }
             }
@@ -193,6 +197,14 @@ public class GameServerModular {
      * 게임 종료
      */
     private void endGame(String message) {
+        // 타이머가 돌고 있으면 취소
+        if (gameTimer != null) {
+            try {
+                gameTimer.cancel();
+            } catch (Exception ignored) {}
+            gameTimer = null;
+        }
+
         gameState = GameConstants.GameState.ENDED;
         broadcast(NetworkProtocol.MSG_GAME_END + ":" + message);
 
@@ -210,8 +222,45 @@ public class GameServerModular {
     }
 
     /**
-     * 모든 클라이언트에게 메시지 브로드캐스트
+     * 게임 시간 제한(1분) 타이머 시작
+     * PLAYING 상태에서 1분 내에 술래가 모든 도망자를 잡지 못하면 도망자 승리
      */
+    private void startGameTimeLimit() {
+        final long GAME_TIME_LIMIT_MS = 60000; // 1분(60초)
+
+        // 이전 타이머가 있다면 취소
+        if (gameTimer != null) {
+            gameTimer.cancel();
+            gameTimer = null;
+        }
+
+        gameTimer = new Timer();
+        gameTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                synchronized (GameServerModular.this) {
+                    if (gameState != GameConstants.GameState.PLAYING) {
+                        return;
+                    }
+
+                    long elapsed = System.currentTimeMillis() - gameStartTime;
+                    long remainingMs = GAME_TIME_LIMIT_MS - elapsed;
+                    int remainingSec = (int) Math.max(0, (remainingMs + 999) / 1000);
+
+                    // 브로드캐스트로 클라이언트에 남은 초 전송
+                    broadcast(NetworkProtocol.MSG_COUNTDOWN + ":" + remainingSec);
+
+                    if (remainingMs <= 0) {
+                        // 시간 초과: 도망자 승리
+                        gameTimer.cancel();
+                        gameTimer = null;
+                        endGame("HIDERS_WIN");
+                        System.out.println("⏱️ 1분 경과 - 도망자 승리!");
+                    }
+                }
+            }
+        }, 0, 1000);
+    }
     public void broadcast(String message) {
         clients.removeIf(client -> !client.isConnected());
         for (ClientHandler client : clients) {
