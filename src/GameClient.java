@@ -2397,8 +2397,8 @@ public class GameClient extends JFrame {
                 if ("FIRESTOP".equalsIgnoreCase(type)) {
                     size = 100;
                 } else if ("CHAIR".equalsIgnoreCase(type) || "TABLE".equalsIgnoreCase(type) ||
-                           "BROWNCLEANER".equalsIgnoreCase(type) || "WHITECLEANER".equalsIgnoreCase(type) ||
-                           "TRASH".equalsIgnoreCase(type)) {
+                        "BROWNCLEANER".equalsIgnoreCase(type) || "WHITECLEANER".equalsIgnoreCase(type) ||
+                        "TRASH".equalsIgnoreCase(type)) {
                     size = 120; // 의자, 책상, 청소용품, 휴지통은 소화기보다 더 크게
                 }
             }
